@@ -2,15 +2,17 @@
 #include <fstream>
 #include <string.h>
 #include <set>
+#include <vector>
+#include <algorithm>
 
-void lexer(std::string& token, char* lexeme,std::ifstream& file, int& state) {
+void lexer(std::string& token, std::vector<char> lexeme,std::ifstream& file, int& state) {
     
     int i = 0;
     int dfsm[10][5];
     char c;
     bool done = false;
-    std::set <char> opsep = {'=','!','>','<','+','-','*','#','(',')','{','}',';',',',' '};
-    std::set <const char*> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false"};
+    std::vector <char> opsep = {'=','!','>','<','+','-','*','#','(',')','{','}',';',',',' '};
+    std::vector <std::string> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false"};
 
     dfsm[1][1] = 3;
     dfsm[1][2] = 2;
@@ -57,34 +59,34 @@ void lexer(std::string& token, char* lexeme,std::ifstream& file, int& state) {
     dfsm[9][3] = 9;
     dfsm[9][4] = 9;
 
-    while (done != true) {
+    while (!done) {
         file.get(c);
-        if (c == ' ') token = "Space"; done = true; break;
+        if (c == ' ') token = "Space"; done = true; continue;
         
 
 
         switch (tolower(c))
         {
         case '=':
-            lexeme[i++] = c;
+            lexeme.push_back(c);
             file.get(c);
-            if (c == ('=' || '>')) {lexeme[i++] = c; token = "Operator"; done = true;}
+            if (c == ('=' || '>')) {lexeme.push_back(c); token = "Operator"; done = true;}
             else { file.unget(); }
             break;
 
         case '!':
-            lexeme[i++] = c;
+            lexeme.push_back(c);
             file.get(c);
-            if (c == '=') {lexeme[i++] = c; token = "Operator"; done = true;}
+            if (c == '=') {lexeme.push_back(c); token = "Operator"; done = true;}
             else { token = "Unknown"; file.unget();}
             break;
 
         case '<':
-            lexeme[i++] = c;
+            lexeme.push_back(c);
             done = true;
             file.get(c);
             if (c == ' ') { token = "Operator"; state == 9;}
-            else if (c == '=') {lexeme[i++] = c; token = "Operator"; done = true;}
+            else if (c == '=') {lexeme.push_back(c); token = "Operator"; done = true;}
             else { file.unget(); }
             break;
 
@@ -92,7 +94,7 @@ void lexer(std::string& token, char* lexeme,std::ifstream& file, int& state) {
         case '+':
         case '-':
         case '*':
-            lexeme[i++] = c;
+            lexeme.push_back(c);
             token = "Operator";
             done = true;
             break;
@@ -105,7 +107,7 @@ void lexer(std::string& token, char* lexeme,std::ifstream& file, int& state) {
         case '}':
         case ';':
         case ',':
-            lexeme[i++] = c; 
+            lexeme.push_back(c); 
             token = "Separator"; 
             done = true; 
             break;
@@ -138,12 +140,12 @@ void lexer(std::string& token, char* lexeme,std::ifstream& file, int& state) {
         case 'z':
             state = dfsm[state][1]; 
             if (state = 3 || 5 || 6 || 7) token = "Identifier";
-            lexeme[i++] = c;
+            lexeme.push_back(c);
 
             file.get(c);
-            if (opsep.find(c) != opsep.end()) { done = true; file.unget(); break; }
-            else if (c == '_') { lexeme[i++] = c; state = dfsm[state][3]; }
-            else if (c == '.') { lexeme[i++] = c; state = dfsm[state][4]; }
+            if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) { done = true; file.unget(); break; }
+            else if (c == '_') { lexeme.push_back(c); state = dfsm[state][3]; }
+            else if (c == '.') { lexeme.push_back(c); state = dfsm[state][4]; }
             else file.unget();
                 
             break; //accepting is 3,5,6,7
@@ -162,11 +164,11 @@ void lexer(std::string& token, char* lexeme,std::ifstream& file, int& state) {
             if (state = 2) token = "Integer";
             else if (state = 8) token = "Real";
             else if (state = 6) token = "Identifier";
-            lexeme[i++] = c;
+            lexeme.push_back(c);
 
             file.get(c);
-            if (opsep.find(c) != opsep.end()) { done = true; file.unget(); break; }
-            else if (c == '.') { lexeme[i++] = c; state = dfsm[state][4]; }
+            if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) { done = true; file.unget(); break; }
+            else if (c == '.') { lexeme.push_back(c); state = dfsm[state][4]; }
             else file.unget();
 
             break; //accepting is 2,8
@@ -176,13 +178,13 @@ void lexer(std::string& token, char* lexeme,std::ifstream& file, int& state) {
             done = true;
             break;
         }
+
+        if (file.eof()) {lexeme.pop_back(); done = true;}
     }
     
-    if (keyword.find(lexeme) != keyword.end()) token = "Keyword";
+    std::string comment(lexeme.begin(), lexeme.end());
+    if (std::find(keyword.begin(), keyword.end(), comment) != keyword.end()) token = "Keyword";
     if (state == 9) token = "Unknown";
-            std::cout << "here1\n";
-    lexeme[i] = 'c';
-
 }
 
 
@@ -196,8 +198,9 @@ int main(int argc, const char * argv[])
     std::string filename = argv[1];
     std::ifstream file(filename);
     std::string token;
-    char *lexeme = new char[BUFSIZ];
+    std::vector<char> lexeme;
     int state = 1;
+    bool skip = false;
 
     if (!file.is_open()) {
       std::cerr << "\n\nWarning, could not open file '" << filename << "'\n\n";
@@ -208,11 +211,12 @@ int main(int argc, const char * argv[])
 
     while (!file.eof()) {
         lexer(token,lexeme,file,state);
-        std::cout << "here\n";
-        if (token != "Space") {
-            std::cout << token << "\t\t\t" << lexeme << std::endl;
+        if (lexeme.size() != 0 && token != "Space") {
+            std::cout << token << "\t\t\t";
+            for (auto s : lexeme) {std::cout << s;}
+            std::cout << std::endl;
+            lexeme.clear();
         }
-        lexeme[BUFSIZ] = '\0';
         state = 1;
     }
 
