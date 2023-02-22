@@ -6,14 +6,15 @@
 #include <algorithm>
 #include <iomanip>
 
-void lexer(std::string& token, std::vector<char>& lexeme,std::ifstream& file, int& state) {
+void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, int& state, bool& skip) {
     
     int dfsm[10][5];
     char c;
+    char s;
     bool done = false;
     bool unknown = false;
     std::vector <char> opsep = {'=','!','>','<','+','-','*','#','(',')','{','}',';',','};
-    std::vector <std::string> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false"};
+    std::vector <std::string> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false","function"};
     std::vector <char> num = {'0','1','2','3','4','5','6','7','8','9'};
 
     dfsm[1][1] = 3;
@@ -63,9 +64,11 @@ void lexer(std::string& token, std::vector<char>& lexeme,std::ifstream& file, in
 
     //Parsing character
     while (!done) {
-        file.get(c);
+        file.get(s);
+        if (isspace(s) && s != ' ' && !file.eof()) continue;
 
-        switch (tolower(c))
+        c = tolower(s);
+        switch (c)
         {
         case ' ':
             done = true;
@@ -99,10 +102,19 @@ void lexer(std::string& token, std::vector<char>& lexeme,std::ifstream& file, in
         case '>':
         case '+':
         case '-':
+        case '/':
+            lexeme.push_back(c);
+            token = "Operator";
+            done = true;
+            break;
+
         case '*':
             lexeme.push_back(c);
             token = "Operator";
             done = true;
+            file.get(c);
+            if (c == ']') {lexeme.clear(); skip = false;}
+            else file.unget();
             break;
         
         case '#':
@@ -193,15 +205,21 @@ void lexer(std::string& token, std::vector<char>& lexeme,std::ifstream& file, in
             file.unget();
             break;
 
-        
-        
+        //comment
+        case '[':
+            file.get(c);
+            if (c == '*') skip = true;
+            else lexeme.push_back('['); unknown = true;
+            file.unget();
+            break;
+                
         default:
-            lexeme.push_back(c);
+            lexeme.push_back(c); 
             unknown = true;
             break;
         }
 
-        if (file.eof()) {lexeme.pop_back(); done = true;}
+        if (file.eof()) {done = true;}
     }
 
     std::string checkid(lexeme.begin(), lexeme.end());
@@ -231,14 +249,15 @@ int main(int argc, const char * argv[])
 
     std::cout << std::left << std::setw(15) << "Token" << "Lexeme\n\n"; 
     while (!file.eof()) {
-        lexer(token,lexeme,file,state);
-        if (lexeme.size() != 0) {
+        lexer(token, lexeme, file, state, skip);
+        if (lexeme.size() != 0 && !skip) {
             std::cout << std::left << std::setw(15) << token;
             for (auto s : lexeme) std::cout << s;
             std::cout << std::endl;
             lexeme.clear();
             state = 1;
         }
+        //state = 1;
     }
 
     file.close();
