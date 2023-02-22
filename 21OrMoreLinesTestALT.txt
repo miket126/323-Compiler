@@ -1,0 +1,37 @@
+[*Test File that fulfills >21 lines requirement*]
+
+[*Function converts input real to int by truncation assuming >, <, and = is somehow defined between ints and reals, albeit inefficiently*]
+function real2int (myReal real)
+    int myInt;
+{
+    myInt = 0;
+    if(myReal > 0.0)
+    {
+        while(myInt < myReal)
+        {
+            myInt = myInt + 1;
+        }
+        return myInt - 1;
+    }
+    else
+    {
+        if(myReal < 0.0)
+        {
+            while(myInt > myReal)
+            {
+                myInt = myInt - 1;
+            }
+            return myInt + 1;
+        }
+        fi
+        return myInt; 
+    }
+    fi
+}
+#
+real testReal;
+#
+testReal = 15.1;
+put(real2int(testReal));
+testReal = testReal - 20.0;
+put(real2int(testReal));
