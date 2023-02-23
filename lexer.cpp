@@ -13,7 +13,7 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
     char s;
     bool done = false;
     bool unknown = false;
-    std::vector <char> opsep = {'=','!','>','<','+','-','*', '/', '#','(',')','{','}',';',','};
+    std::vector <char> opsep = {'=','!','>','<','+','-','*','/','#','(',')','{','}',';',','};
     std::vector <std::string> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false","function"};
     std::vector <char> num = {'0','1','2','3','4','5','6','7','8','9'};
 
@@ -236,6 +236,12 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
                 
         default:
             if(!isspace(c)) {lexeme.push_back(c); unknown = true;}
+
+            //check next char for special case
+            file.get(c);
+            if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
+            else if (file.eof()) {done = true; break;}
+            file.unget();
             break;
         }
     }

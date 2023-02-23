@@ -1,0 +1,9 @@
+[*Better short test*]
+function int bool real if fi else return put get identifier while endwhile true false
+[*inline comment*]
+= == != > < <= => + - * / ## () {} ; , 
+function myFunction(a real, b bool, c int){return;}
+intrealbool/Test
+123 123.123 123.
+12ab abπ π\3.14 π/3.14
+end of input
