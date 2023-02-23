@@ -1,1 +1,21 @@
-while  (fahr <= upper)   a = 23.00; endwhile  [* this is sample *]
+while  (fahr <= upper)   a = 23.00; endwhile  [* this is sample *] int = 9;
+
+[* this is comment for this sample code which
+   converts  Fahrenheit into Celcius *]
+
+function convert1x (fahr int)
+{
+           return 5 * (fahr -32) / 9;
+}
+
+#
+     Int     low,  high, step;      [* declarations *]
+#
+     get (low, high, step);
+     while (low  <=  high )  
+         {  put (low);
+             put (convert1x (low));
+             low =  low  +  step;
+         } 
+     endwhile
+testop != == => === !== ==>

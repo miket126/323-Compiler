@@ -65,15 +65,11 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
     //Parsing character
     while (!done) {
         file.get(s);
-        if (isspace(s) && s != ' ' && !file.eof()) continue;
+        if (isspace(s)) break;
 
         c = tolower(s);
         switch (c)
         {
-        case ' ':
-            done = true;
-            break;
-
         case '=':
             lexeme.push_back(c);
             token = "Operator";
@@ -114,11 +110,10 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             done = true;
             file.get(c);
             if (c == ']') {lexeme.clear(); skip = false;}
-            else file.unget();
+            else {file.unget();}
             break;
         
         case '#':
-        case '|':
         case '(':
         case ')':
         case '{':
@@ -199,7 +194,7 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
         case '.':
             lexeme.push_back(c);
             state = dfsm[state][4];
-            if (lexeme.size() == 1) {unknown = true;}
+            if (lexeme.size() == 1) unknown = true;
             file.get(c);
             if (std::find(num.begin(), num.end(), c) == num.end()) unknown = true;
             file.unget();
@@ -214,24 +209,23 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             break;
                 
         default:
-            lexeme.push_back(c); 
-            unknown = true;
+            if(!isspace(c)) {lexeme.push_back(c); unknown = true;}
             break;
         }
 
-        if (file.eof()) {done = true;}
+        //if (file.peek() == EOF) break;
     }
 
     std::string checkid(lexeme.begin(), lexeme.end());
     if (std::find(keyword.begin(), keyword.end(), checkid) != keyword.end()) token = "Keyword";
-    if ((state == 9) || unknown) token = "Unknown";
+    else if ((state == 9) || unknown) token = "Unknown";
 }
 
 
 int main(int argc, const char * argv[])
 {
     if (argc != 2) {
-        std::cerr << "Usage: ./lexer filename\n\n";
+        std::cerr << "Usage: ./lexer infile_name.txt > outfile_name.txt\n\n";
         exit(-2);
     }
 
@@ -257,7 +251,6 @@ int main(int argc, const char * argv[])
             lexeme.clear();
             state = 1;
         }
-        //state = 1;
     }
 
     file.close();
