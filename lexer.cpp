@@ -69,7 +69,7 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
     //Parsing character
     while (!done) {
         file.get(s);
-        if (isspace(s)) break;
+        if (isspace(s) || file.eof()) break;
 
         c = tolower(s);
         switch (c)
