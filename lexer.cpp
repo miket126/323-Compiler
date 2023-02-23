@@ -17,6 +17,7 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
     std::vector <std::string> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false","function"};
     std::vector <char> num = {'0','1','2','3','4','5','6','7','8','9'};
 
+    // All 3 in 1, int real identifer dfsm
     dfsm[1][1] = 3;
     dfsm[1][2] = 2;
     dfsm[1][3] = 9;
@@ -62,6 +63,9 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
     dfsm[9][3] = 9;
     dfsm[9][4] = 9;
 
+    lexeme.clear();
+    state = 1;
+
     //Parsing character
     while (!done) {
         file.get(s);
@@ -74,6 +78,8 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             lexeme.push_back(c);
             token = "Operator";
             done = true;
+
+            //check next char for special case
             file.get(c);
             if (c == '=' || '>') lexeme.push_back(c);
             else file.unget();
@@ -90,6 +96,8 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             lexeme.push_back(c);
             token = "Operator";
             done = true;
+
+            //check next char for special case
             file.get(c);
             if (c == '=') lexeme.push_back(c);
             else file.unget();
@@ -108,8 +116,14 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             lexeme.push_back(c);
             token = "Operator";
             done = true;
+
+            //check next char for special case
             file.get(c);
-            if (c == ']') {lexeme.clear(); skip = false;}
+            if (c == ']') {
+                file.get(c);
+                if (file.eof()) {done = true; break;}
+                else {lexeme.clear(); skip = false; file.unget();}
+            }
             else {file.unget();}
             break;
         
@@ -155,8 +169,10 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             state = dfsm[state][1]; 
             if (state == 3 || 5) token = "Identifier";
 
+            //check next char for special case
             file.get(c);
             if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
+            else if (file.eof()) {done = true; break;}
             file.unget();
             break;
 
@@ -165,8 +181,11 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             state = dfsm[state][3];
             if (state == 7) token = "Identifier";
             else if (lexeme.size() == 1) unknown = true;
+
+            //check next char for special case
             file.get(c);
             if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
+            else if (file.eof()) {done = true; break;}
             file.unget();
             break;
 
@@ -186,8 +205,10 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             else if (state == 8) token = "Real";
             else if (state == 6) token = "Identifier";
 
+            //check next char for special case
             file.get(c);
             if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
+            else if (file.eof()) {done = true; break;}
             file.unget();
             break;
 
@@ -195,8 +216,13 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             lexeme.push_back(c);
             state = dfsm[state][4];
             if (lexeme.size() == 1) unknown = true;
+
+            //check next char for special case
             file.get(c);
-            if (std::find(num.begin(), num.end(), c) == num.end()) unknown = true;
+            if (std::find(num.begin(), num.end(), c) == num.end()) {
+                unknown = true;
+                if (file.eof()) {done = true; break;}
+            }
             file.unget();
             break;
 
@@ -212,10 +238,9 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
             if(!isspace(c)) {lexeme.push_back(c); unknown = true;}
             break;
         }
-
-        //if (file.peek() == EOF) break;
     }
 
+    // check for keyword
     std::string checkid(lexeme.begin(), lexeme.end());
     if (std::find(keyword.begin(), keyword.end(), checkid) != keyword.end()) token = "Keyword";
     else if ((state == 9) || unknown) token = "Unknown";
@@ -247,9 +272,7 @@ int main(int argc, const char * argv[])
         if (lexeme.size() != 0 && !skip) {
             std::cout << std::left << std::setw(15) << token;
             for (auto s : lexeme) std::cout << s;
-            std::cout << std::endl;
-            lexeme.clear();
-            state = 1;
+            std::cout << std::endl;           
         }
     }
 

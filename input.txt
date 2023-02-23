@@ -17,5 +17,5 @@ function convert1x (fahr int)
              put (convert1x (low));
              low =  low  +  step;
          } 
-     endwhile
-testop != == => === !== ==>
+         testop != == => === !== ==>
+     endwhile 9 id5_5 []g [* declarations *] 5.
