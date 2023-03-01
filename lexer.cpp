@@ -256,7 +256,7 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
 int main(int argc, const char * argv[])
 {
     if (argc != 2) {
-        std::cerr << "Usage: ./lexer infile_name.txt > outfile_name.txt\n\n";
+        std::cerr << "Usage: ./lexer.exe infile_name.txt > outfile_name.txt\n\n";
         exit(-2);
     }
 
