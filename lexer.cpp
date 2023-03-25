@@ -272,8 +272,7 @@ void lexer(std::ifstream& file) {
 
 void relop(std::ifstream& file) {
     if (test == "==" || "!=" || ">" || "<" || "<=" || "=>") {
-        std::cout << "<Condition> ::=     <Expression>  <Relop>   <Expression>\n"
-                  << "<Relop> ::=        ==   |   !=    |   >     |   <    |  <=   |    => \n";
+        std::cout << "<Relop> ::=        ==   |   !=    |   >     |   <    |  <=   |    => \n";
         lexer(file);
     }
 }
