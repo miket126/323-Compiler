@@ -6,7 +6,17 @@
 #include <algorithm>
 #include <iomanip>
 
-void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, int& state, bool& skip) {
+std::string token;
+std::vector<char> lexeme;
+int state = 1;
+bool skip = false;
+std::string test;
+
+//std::vector <std::auto> reloptest = {'==','!=','>','<','<=','=>'};
+
+//void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, int& state, bool& skip) {
+
+void lexer(std::ifstream& file) {
     
     int dfsm[10][5];
     char c;
@@ -247,11 +257,42 @@ void lexer(std::string& token, std::vector<char>& lexeme, std::ifstream& file, i
     }
 
     // check for keyword
-    std::string checkid(lexeme.begin(), lexeme.end());
-    if (std::find(keyword.begin(), keyword.end(), checkid) != keyword.end()) token = "Keyword";
+    std::string temp(lexeme.begin(), lexeme.end());
+    test = temp;
+    if (std::find(keyword.begin(), keyword.end(), test) != keyword.end()) token = "Keyword";
     else if ((state == 9) || unknown) token = "Unknown";
+
+    if (lexeme.size() != 0 && !skip) {
+            std::cout << std::left << std::setw(15) << token;
+            for (auto s : lexeme) std::cout << s;
+            std::cout << std::endl;           
+    }
 }
 
+
+void relop(std::ifstream& file) {
+    if (test == "==" || "!=" || ">" || "<" || "<=" || "=>") {
+        std::cout << "<Condition> ::=     <Expression>  <Relop>   <Expression>\n"
+                  << "<Relop> ::=        ==   |   !=    |   >     |   <    |  <=   |    => \n";
+        lexer(file);
+    }
+}
+
+void qualifier(std::ifstream& file) {
+    if (test == "int" || "bool" || "real" ) {
+        std::cout << "<Qualifier> ::= int   |    bool   |  real\n";
+        lexer(file);
+    }
+}
+
+ 
+void ofd(std::ifstream& file) {
+
+}
+
+void Rat32S(std::ifstream& file) {
+    lexer(file);
+}
 
 int main(int argc, const char * argv[])
 {
@@ -262,17 +303,20 @@ int main(int argc, const char * argv[])
 
     std::string filename = argv[1];
     std::ifstream file(filename);
-    std::string token;
-    std::vector<char> lexeme;
-    int state = 1;
-    bool skip = false;
+
 
     if (!file.is_open()) {
       std::cerr << "\n\nWarning, could not open file '" << filename << "'\n\n";
       exit(-1);
     }
 
-    std::cout << std::left << std::setw(15) << "Token" << "Lexeme\n\n"; 
+    std::cout << std::left << std::setw(15) << "Token" << "Lexeme\n\n";
+
+    while (!file.eof()) {
+        Rat32S(file);
+    }
+
+    /*
     while (!file.eof()) {
         lexer(token, lexeme, file, state, skip);
         if (lexeme.size() != 0 && !skip) {
@@ -282,6 +326,8 @@ int main(int argc, const char * argv[])
         }
     }
 
+    */ 
+    
     file.close();
     return 0;
 }
