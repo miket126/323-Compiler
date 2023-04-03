@@ -270,28 +270,392 @@ void lexer(std::ifstream& file) {
 }
 
 
-void relop(std::ifstream& file) {
-    if (test == "==" || "!=" || ">" || "<" || "<=" || "=>") {
-        std::cout << "<Relop> ::=        ==   |   !=    |   >     |   <    |  <=   |    => \n";
+
+
+void Rat32S(std::ifstream& file) {
+    lexer(file);        //for testing assignment 1
+
+    std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
+    ofd(file);
+    lexer(file);
+    if (test == "#") {
         lexer(file);
+        odl(file);
+        if (test == "#") {lexer(file); statement(file);}
+        else std::cout << "Expected # after <Opt Declaration List>\n";
+
+        if (!file.eof()) std::cerr << "Expected EOF marker\n";
     }
+    else std::cout << "Expected # after <Opt Function Definition>\n";
+    //lexer(file);
+
+}
+
+
+void ofd(std::ifstream& file) {
+    std::cout << "<Opt Function Definitions> 	-> 	<Function Definitions> | <Empty>\n";
+    funcdef(file);
+    //lexer(file);
+}
+
+void funcdef(std::ifstream& file) {
+    std::cout << "<Function Definitions>		->	<Function> <Function Suffix>\n";
+    func(file);
+    funcsuf(file);
+    //lexer(file);
+}
+
+void funcsuf(std::ifstream& file) {
+    std::cout << "<Function Suffix>			->	<Function Definitions> | <empty>\n";
+    funcdef(file);
+    //lexer(file);
+}
+
+void func(std::ifstream& file) {
+    if (test == "function") {
+        std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
+        lexer(file);
+        if (token == "Identifier") lexer(file);
+        else std::cout << "Expected Identifier\n";
+
+        if (test == "(") {lexer(file); opl(file);}
+        else std::cout << "Expected (\n";
+
+        if (test == ")") {lexer(file); odl(file);}
+        else std::cout << "Expected )\n";
+    }
+
+    body(file);
+    //lexer(file);
+}
+
+void opl(std::ifstream& file) {
+    std::cout << "<Opt Parameter List>		-> 	<Parameter List> | <Empty>\n";
+    paramlist(file);
+    //lexer(file);
+}
+
+void paramlist(std::ifstream& file) {
+    std::cout << "<Parameter List>			->	<Parameter>	<Parameter Suffix>\n";
+    param(file);
+    paramsuf(file);
+    lexer(file);
+}
+
+void paramsuf(std::ifstream& file) {
+    if (test == ",") {
+        std::cout << "<Parameter Suffix>			->  ,<Parameter List> | <empty>\n";
+        lexer(file);
+        paramlist(file);
+    }
+    else std::cout << "Expected ,\n";
+    //lexer(file);
+}
+
+void param(std::ifstream& file) {
+    std::cout << "<Parameter>					->	<IDs> <Qualifier>\n";
+    ids(file);
+    qualifier(file);
+    //lexer(file);
 }
 
 void qualifier(std::ifstream& file) {
     if (test == "int" || "bool" || "real" ) {
         std::cout << "<Qualifier> ::= int   |    bool   |  real\n";
-        lexer(file);
+        //lexer(file);
     }
-}
-
- 
-void ofd(std::ifstream& file) {
-
-}
-
-void Rat32S(std::ifstream& file) {
+    else std::cout << "Expected: int   |    bool   |  real\n"; 
     lexer(file);
 }
+
+
+void body(std::ifstream& file) {
+    if (test == "{") {
+        std::cout << "<Body>						->	{ <Statement List> }\n";
+        lexer(file);
+        statementlist(file);
+    }
+    else std::cout << "Expected {\n";
+
+    
+    lexer(file);
+}
+
+void odl(std::ifstream& file) {
+    std::cout << " <Opt Declaration List>		->	<Declaration List> | <Empty>\n";
+    declist(file);
+    //lexer(file);
+}
+
+void declist(std::ifstream& file) {
+    std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";
+    dec(file);
+    if (test == ";") {lexer(file); decsuf(file);}
+    else std::cout << "Expected ;\n";
+    
+    lexer(file);
+}
+
+void decsuf(std::ifstream& file) {
+    std::cout << "<Declaration Suffix> 	->  <Declaration List>  |  <empty>\n";
+    declist(file);
+    //lexer(file);
+}
+
+void dec(std::ifstream& file) {
+    std::cout << "<Declaration>				-> 	<Qualifier> <IDs>\n";
+    qualifier(file);
+    ids(file);
+    //lexer(file);
+}
+
+void ids(std::ifstream& file) {
+    if (token == "Identifier") {
+        std::cout << "<IDs>						->	<Identifier> <IDs Suffix>\n";
+        lexer(file);
+        idsuffix(file);
+    }
+    else std::cout << "Expected Identifier\n";
+    lexer(file);
+}
+
+void idsuffix(std::ifstream& file) {
+    if (test == ",") {
+        std::cout << "<IDs Suffix>				->  ,<IDs>  |  <empty>\n";
+        lexer(file);
+        ids(file);
+    }
+    else std::cout << "Expected ,\n";
+    lexer(file);
+}
+
+void statementlist(std::ifstream& file) {
+    std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";
+    statement(file);
+    statementsuf(file);
+    //lexer(file);
+}
+
+void statementsuf(std::ifstream& file) {
+    std::cout << "<Statement Suffix>  	->  <Statement List>  |  <empty>\n";
+    statementlist(file);
+    //lexer(file);
+}   
+
+void statement(std::ifstream& file) {
+    lexer(file);
+    std::cout << "<Statement>				->	<Compound>	|	<Assign>	|	<If>	|	<Return>	|	<Print>	|	<Scan>	|	<While>\n";
+    if (test == "{") comp(file);
+    else if (token == "Identifier") assign(file);
+    else if (test == "if") if_(file);
+    else if (test == "return") return_(file);
+    else if (test == "put") print_(file);
+    else if (test == "get") scan(file);
+    else if (test == "while") while_(file);
+    else std::cout << "Expected { | Identifier | if | return | put | get | while\n";
+    
+    lexer(file);
+}
+
+void comp(std::ifstream& file) {
+    if (test == "{") {
+        std::cout << "<Compound>					->	{ <Statement List> }\n";
+        lexer(file);
+        statementlist(file);
+    }
+    else std::cout << "Expected {\n";
+    lexer(file);
+}
+
+void assign(std::ifstream& file) {
+    if (token == "Identifier") std::cout << "<Assign>					->	<Identifier> = <Expression>;\n";
+    else std::cout << "Expected Identifier\n";
+
+    lexer(file);
+    if (test == "=") {lexer(file); exp(file);}
+    else std::cout << "Expected =\n";
+
+    lexer(file);
+    if (test == ";") lexer(file);
+    else std::cout << "Expected ;\n";
+
+    lexer(file);
+}
+
+void if_(std::ifstream& file) {
+    if (test == "if") std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
+    else std::cout << "Expected if\n";
+    
+    lexer(file);
+    if (test == "(") {lexer(file); cond(file);}
+    else std::cout << "Expected (\n";
+
+    if (test == ")") {lexer(file); statement(file); ifsuf(file);}
+    else std::cout << "Expected )\n";
+
+    lexer(file);
+}
+
+void ifsuf(std::ifstream& file) {
+    std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
+    if (test == "fi") lexer(file);
+    else if (test == "else") {
+        lexer(file); statement(file);
+        if (test == "fi") lexer(file);
+    }
+    else std::cout << "Expected fi | else\n";
+    lexer(file);
+}
+
+void return_(std::ifstream& file) {
+    if (test == "return") {
+        std::cout << "<Return>					->	return <Return Suffix>\n";
+        lexer(file);
+        returnsuf(file);
+    }
+    else std::cout << "Expected return\n";
+    lexer(file);
+}
+
+void returnsuf(std::ifstream& file) {
+    std::cout << "<Return Suffix>			->  ;  |  <Expression>;\n";
+    if (test == ";") lexer(file);
+    else {
+        exp(file);
+        if (test == ";") lexer(file);
+        else std::cout << "Expected ;\n";
+    }
+    lexer(file);
+}
+
+void print_(std::ifstream& file) {
+    if (test == "put") std::cout << "<Print>					->	put(<Expression>);\n";
+    else std::cout << "Expected put\n";
+    lexer(file);
+
+    if (test == "(") {lexer(file); exp(file);}
+    else std::cout << "Expected (\n";
+    lexer(file);
+    if (test == ")") lexer(file);
+    else std ::cout << "Expected )\n";
+    
+    if (test == ";") lexer(file);
+    else std::cout << "Expected ;\n";
+
+    lexer(file);
+}
+
+void scan(std::ifstream& file) {
+    if (test == "get") std::cout << "<Scan>						->	get(<IDs>);\n";
+    else std::cout << "Expected get\n";
+    lexer(file);
+
+    if (test == "(") {lexer(file); ids(file);}
+    else std::cout << "Expected (\n";
+    lexer(file);
+    if (test == ")") lexer(file);
+    else std::cout << "Expected )\n";
+
+    if (test == ";") lexer(file);
+    else std::cout << "Expected ;\n";
+
+    lexer(file);
+}
+
+void while_(std::ifstream& file) {
+    if (test == "while") std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
+    else std::cout << "Expected while\n";
+    lexer(file);
+
+    if (test == "(") {lexer(file); cond(file);}
+    else std::cout << "Expected (\n";
+    lexer(file);
+    if (test == ")") {lexer(file); statement(file);}
+    else std::cout << "Expected )\n";
+    lexer(file);
+    if (test == "endwhile") lexer(file);
+    else std::cout << "Expected endwhile\n";
+    lexer(file);
+}
+
+void cond(std::ifstream& file) {
+    std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
+    exp(file);
+    relop(file);
+    exp(file);
+    lexer(file);
+}
+
+void relop(std::ifstream& file) {
+    if (test == "==" || "!=" || ">" || "<" || "<=" || "=>") {
+        std::cout << "<Relop> ::=        ==   |   !=    |   >     |   <    |  <=   |    => \n";
+    }
+    else std::cout << "Expected ==   |   !=    |   >     |   <    |  <=   |    =>\n";
+
+    lexer(file);
+}
+
+void exp(std::ifstream& file) {
+    std::cout << "<Expression>				->	<Term> <Expression Prime>\n";
+    term(file);
+    exprime(file);
+    lexer(file);
+}
+
+void exprime(std::ifstream& file) {
+    std::cout << "<Expression Prime>			->  +<Term> <Expression Prime> | -<Term><Expression Prime>  |  <empty>\n";
+    if (test == "+" || "-") {lexer(file); term(file); exprime(file);}
+    //else std::cout << "Expected + | -\n";
+    lexer(file);
+}
+
+void term(std::ifstream& file) {
+    std::cout << "<Term>						->	<Factor> <Term Prime>\n";
+    factor(file);
+    termprime(file);
+    lexer(file);
+}
+
+void termprime(std::ifstream& file) {
+    std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
+    if (test == "*" || "/") {lexer(file); factor(file); termprime(file);}
+    //else std::cout << "Expected + | -\n";
+    //lexer(file);
+}
+
+void factor(std::ifstream& file) {
+    std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
+    if (test == "-") {lexer(file); primary(file);}
+    else primary(file);
+    lexer(file);
+}
+
+void primary(std::ifstream& file) {
+    if ((token == "Identifier" || "Real" || "Integer") || (test == "(" || "true" || "false")) {
+        std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   <Real>  |   true   |  false\n";
+        if (token == "Identifier") {lexer(file); identifiersuf(file);}
+        if (test == "(") {
+            lexer(file); exp(file);
+            if (test != ")") std::cout << "Expected )\n";
+        }
+    }
+    else std::cout << "Expected Identifier | Real | Integer | ( | true | false\n";
+    lexer(file);
+}
+
+void identifiersuf(std::ifstream& file) {
+    std::cout << "<Identifier Suffix>  ->    ( <IDs> )   | <Empty>\n";
+    if (test == "(") {lexer(file); ids(file);}
+    lexer(file);
+    if (test == ")") lexer(file);
+}
+
+/*
+void (std::ifstream& file) {
+    std::cout << "\n";
+    lexer(file);
+}
+*/
 
 int main(int argc, const char * argv[])
 {
