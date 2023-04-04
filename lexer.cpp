@@ -9,8 +9,18 @@
 std::string token;
 std::vector<char> lexeme;
 int state = 1;
-bool skip = false;
+bool skip = true;
 std::string test;
+bool done = false;
+bool unknown = false;
+char c;
+char s;
+
+std::vector <char> opsep = {'=','!','>','<','+','-','*','/','#','(',')','{','}',';',','};
+std::vector <std::string> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false","function"};
+std::vector <char> num = {'0','1','2','3','4','5','6','7','8','9'};
+
+
 
 //std::vector <std::auto> reloptest = {'==','!=','>','<','<=','=>'};
 
@@ -19,13 +29,6 @@ std::string test;
 void lexer(std::ifstream& file) {
     
     int dfsm[10][5];
-    char c;
-    char s;
-    bool done = false;
-    bool unknown = false;
-    std::vector <char> opsep = {'=','!','>','<','+','-','*','/','#','(',')','{','}',';',','};
-    std::vector <std::string> keyword = {"int","bool","real","if","fi","else","return","put","get","while","endwhile","true","false","function"};
-    std::vector <char> num = {'0','1','2','3','4','5','6','7','8','9'};
 
     // All 3 in 1, int real identifer dfsm
     dfsm[1][1] = 3;
@@ -67,19 +70,25 @@ void lexer(std::ifstream& file) {
     dfsm[8][2] = 8;
     dfsm[8][3] = 9;
     dfsm[8][4] = 9;
-    
+
     dfsm[9][1] = 9;
     dfsm[9][2] = 9;
     dfsm[9][3] = 9;
     dfsm[9][4] = 9;
 
+    test.clear();
+    skip = true;
+    unknown = false;
+    done = false;
     lexeme.clear();
     state = 1;
 
     //Parsing character
     while (!done) {
         file.get(s);
-        if (isspace(s) || file.eof()) break;
+        //if (isspace(s) && lexeme.size() == 0) continue;
+        if ((isspace(s) && lexeme.size() != 0) || file.eof()) break;
+        //else if (file.eof()) break;
 
         c = tolower(s);
         switch (c)
@@ -91,8 +100,8 @@ void lexer(std::ifstream& file) {
 
             //check next char for special case
             file.get(c);
-            if (c == '=' || '>') lexeme.push_back(c);
-            else file.unget();
+            if (c == ('=' || '>')) lexeme.push_back(c);
+            else file.unget();            
             break;
 
         case '!':
@@ -127,6 +136,7 @@ void lexer(std::ifstream& file) {
             token = "Operator";
             done = true;
 
+            /*
             //check next char for special case
             file.get(c);
             if (c == ']') {
@@ -135,6 +145,8 @@ void lexer(std::ifstream& file) {
                 else {lexeme.clear(); skip = false; file.unget();}
             }
             else {file.unget();}
+            */
+            
             break;
         
         case '#':
@@ -177,7 +189,7 @@ void lexer(std::ifstream& file) {
         case 'z':
             lexeme.push_back(c);
             state = dfsm[state][1]; 
-            if (state == 3 || 5) token = "Identifier";
+            if (state == (3 || 5)) token = "Identifier";
 
             //check next char for special case
             file.get(c);
@@ -239,43 +251,174 @@ void lexer(std::ifstream& file) {
         //comment
         case '[':
             file.get(c);
-            if (c == '*') skip = true;
-            else lexeme.push_back('['); unknown = true;
-            file.unget();
+            if (c == '*') {
+                while(skip) {
+                    file.get(c);
+                    if (c == '*') {
+                        file.get(c);
+                        if (c == ']') break;
+                    }
+                }
+            }
+            //else {lexeme.push_back('['); file.unget(); unknown = true;}
             break;
-                
-        default:
-            if(!isspace(c)) {lexeme.push_back(c); unknown = true;}
 
-            //check next char for special case
-            file.get(c);
-            if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
-            else if (file.eof()) {done = true; break;}
-            file.unget();
+        case ' ':
+            break;
+
+        default:
+            if(!isspace(c)) {
+                lexeme.push_back(c); unknown = true;
+                //check next char for special case
+                file.get(c);
+                if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
+                else if (file.eof()) done = true;
+                file.unget();
+            }
             break;
         }
     }
 
+    if (file.eof()) return;
     // check for keyword
     std::string temp(lexeme.begin(), lexeme.end());
     test = temp;
     if (std::find(keyword.begin(), keyword.end(), test) != keyword.end()) token = "Keyword";
     else if ((state == 9) || unknown) token = "Unknown";
 
-    if (lexeme.size() != 0 && !skip) {
-            std::cout << std::left << std::setw(15) << token;
-            for (auto s : lexeme) std::cout << s;
-            std::cout << std::endl;           
-    }
+    std::cout << "\n\n\n";
+    std::cout << std::left << std::setw(15) << token;
+    for (auto x : lexeme) std::cout << x;
+    std::cout << std::endl;
+    
 }
 
 
 
 
-void Rat32S(std::ifstream& file) {
-    lexer(file);        //for testing assignment 1
+void Rat32S(std::ifstream& file);
 
+void ofd(std::ifstream& file);
+
+void funcdef(std::ifstream& file);
+
+void funcsuf(std::ifstream& file);
+
+void func(std::ifstream& file);
+
+void opl(std::ifstream& file);
+
+void paramlist(std::ifstream& file);
+
+void paramsuf(std::ifstream& file);
+
+void param(std::ifstream& file);
+
+void qualifier(std::ifstream& file);
+
+void body(std::ifstream& file);
+
+void odl(std::ifstream& file);
+
+void declist(std::ifstream& file);
+
+void decsuf(std::ifstream& file);
+
+void dec(std::ifstream& file);
+
+void ids(std::ifstream& file);
+
+void idsuffix(std::ifstream& file);
+
+void statementlist(std::ifstream& file);
+
+void statementsuf(std::ifstream& file); 
+
+void statement(std::ifstream& file);
+
+void comp(std::ifstream& file);
+
+void assign(std::ifstream& file);
+
+void if_(std::ifstream& file);
+
+void ifsuf(std::ifstream& file);
+
+void return_(std::ifstream& file);
+
+void returnsuf(std::ifstream& file);
+
+void print_(std::ifstream& file);
+
+void scan(std::ifstream& file);
+
+void while_(std::ifstream& file);
+
+void cond(std::ifstream& file);
+
+void relop(std::ifstream& file);
+
+void exp(std::ifstream& file);
+
+void exprime(std::ifstream& file);
+
+void term(std::ifstream& file);
+
+void termprime(std::ifstream& file);
+
+void factor(std::ifstream& file);
+
+void primary(std::ifstream& file);
+
+void identifiersuf(std::ifstream& file);
+
+/*
+void (std::ifstream& file);
+*/
+
+int main(int argc, const char * argv[])
+{
+    if (argc != 2) {
+        std::cerr << "Usage: ./lexer.exe infile_name.txt > outfile_name.txt\n\n";
+        exit(-2);
+    }
+
+    std::string filename = argv[1];
+    std::ifstream file(filename);
+
+
+    if (!file.is_open()) {
+      std::cerr << "\n\nWarning, could not open file '" << filename << "'\n\n";
+      exit(-1);
+    }
+
+    std::cout << std::left << std::setw(15) << "Token" << "Lexeme\n\n";
+
+    while (!file.eof()) {
+        Rat32S(file);
+    }
+
+    /*
+    while (!file.eof()) {
+        lexer(token, lexeme, file, state, skip);
+        if (lexeme.size() != 0 && !skip) {
+            std::cout << std::left << std::setw(15) << token;
+            for (auto s : lexeme) std::cout << s;
+            std::cout << std::endl;           
+        }
+    }
+
+    */ 
+    
+    file.close();
+    return 0;
+}
+
+
+
+void Rat32S(std::ifstream& file) {
     std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
+    lexer(file);        
     ofd(file);
     lexer(file);
     if (test == "#") {
@@ -288,7 +431,7 @@ void Rat32S(std::ifstream& file) {
     }
     else std::cout << "Expected # after <Opt Function Definition>\n";
     //lexer(file);
-
+    
 }
 
 
@@ -620,7 +763,7 @@ void termprime(std::ifstream& file) {
     std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
     if (test == "*" || "/") {lexer(file); factor(file); termprime(file);}
     //else std::cout << "Expected + | -\n";
-    //lexer(file);
+    lexer(file);
 }
 
 void factor(std::ifstream& file) {
@@ -648,49 +791,4 @@ void identifiersuf(std::ifstream& file) {
     if (test == "(") {lexer(file); ids(file);}
     lexer(file);
     if (test == ")") lexer(file);
-}
-
-/*
-void (std::ifstream& file) {
-    std::cout << "\n";
-    lexer(file);
-}
-*/
-
-int main(int argc, const char * argv[])
-{
-    if (argc != 2) {
-        std::cerr << "Usage: ./lexer.exe infile_name.txt > outfile_name.txt\n\n";
-        exit(-2);
-    }
-
-    std::string filename = argv[1];
-    std::ifstream file(filename);
-
-
-    if (!file.is_open()) {
-      std::cerr << "\n\nWarning, could not open file '" << filename << "'\n\n";
-      exit(-1);
-    }
-
-    std::cout << std::left << std::setw(15) << "Token" << "Lexeme\n\n";
-
-    while (!file.eof()) {
-        Rat32S(file);
-    }
-
-    /*
-    while (!file.eof()) {
-        lexer(token, lexeme, file, state, skip);
-        if (lexeme.size() != 0 && !skip) {
-            std::cout << std::left << std::setw(15) << token;
-            for (auto s : lexeme) std::cout << s;
-            std::cout << std::endl;           
-        }
-    }
-
-    */ 
-    
-    file.close();
-    return 0;
 }
