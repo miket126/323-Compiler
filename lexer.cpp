@@ -378,6 +378,22 @@ void identifiersuf(std::ifstream& file);
 /*
 void (std::ifstream& file);
 */
+void removebom(std::ifstream& file) {
+    char b;
+    
+    file.get(b);
+    if (b == (char)0xEF) {
+        file.get(b);
+        if (b == (char)0xBB) file.get(b);
+        else file.unget();
+
+        if (b == (char)0xBF) return;
+        else file.unget();
+    }
+    else file.unget();
+
+    
+}
 
 int main(int argc, const char * argv[])
 {
@@ -395,7 +411,10 @@ int main(int argc, const char * argv[])
       exit(-1);
     }
 
-    std::cout << std::left << std::setw(15) << "Token" << "Lexeme\n\n";
+    removebom(file);
+
+
+    std::cout << std::left << std::setw(15) << "Token" << "Lexeme\n";
 
     while (!file.eof()) {
         Rat32S(file);
@@ -451,7 +470,7 @@ lexer(file); std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declara
 void ofd(std::ifstream& file) {
     //std::cout << "<Opt Function Definitions> 	-> 	<Function Definitions> | <Empty>\n";
     if (test == "function") {std::cout << "<Opt Function Definitions> 	-> 	<Function Definitions> | <Empty>\n";funcdef(file);}
-    return;
+    //return;
     //else std::cout << "<Opt Function Definitions> 	-> 	<Function Definitions> | <Empty>\n";
 }
 
@@ -477,7 +496,7 @@ void funcdef(std::ifstream& file) {
 void funcsuf(std::ifstream& file) {
     //std::cout << "<Function Suffix>			->	<Function Definitions> | <empty>\n";
     if (test == "function") {std::cout << "<Function Suffix>			->	<Function Definitions> | <empty>\n";funcdef(file);}
-    return;
+    //return;
     //else std::cout << "<Function Suffix>			->	<Function Definitions> | <empty>\n";
     //lexer(file);
 }
@@ -525,7 +544,7 @@ void func(std::ifstream& file) {
 void opl(std::ifstream& file) {
     if (token == "Identifier") {    std::cout << "<Opt Parameter List>		-> 	<Parameter List> | <Empty>\n";
 paramlist(file);}
-return;
+//return;
     
     //lexer(file);
 }
@@ -557,7 +576,7 @@ void paramsuf(std::ifstream& file) {
     }
     
 
-    return;
+    //return;
     //else {std::cout << "<Parameter Suffix>			->  ,<Parameter List> | <empty>\n";}
     //lexer(file);
 }
@@ -686,7 +705,7 @@ void idsuffix(std::ifstream& file) {
         ids(file);
     }
     //else {std::cout << "Expected ,\n"; lexer(file);}
-    return;
+    //return;
     
 }
 
