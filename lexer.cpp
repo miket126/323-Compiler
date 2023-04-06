@@ -464,6 +464,7 @@ lexer(file); std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declara
     else {std::cout << "Expected #\n"; lexer(file);}
 
     if (!file.eof()) std::cout << "Expected EOF marker\n";
+    else std::cout << "                                                     End Of File";
 }
 
 
