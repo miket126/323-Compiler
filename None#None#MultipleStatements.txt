@@ -1,0 +1,8 @@
+##{
+    put(-myint);
+    {
+        get(otherint, otherotherint);
+    }
+    myint = otherint + 1;
+    return myint + term * factor;
+}

@@ -1,0 +1,6 @@
+function demoIf(){ [*Test File that fulfills <10 lines requirement*]
+    if(true == 1) {
+        return
+    } 
+    fi
+}##return;
