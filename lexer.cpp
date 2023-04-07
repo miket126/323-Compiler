@@ -85,13 +85,17 @@ void lexer(std::ifstream& file) {
     done = false;
     lexeme.clear();
     state = 1;
+    if (file.eof()) return;           
 
     //Parsing character
     while (!done) {
+                
         file.get(s);
         //if (isspace(s) && lexeme.size() == 0) continue;
-        if ((isspace(s) && lexeme.size() != 0) || file.eof()) break;
-        //else if (file.eof()) break;
+        if (file.eof()) return;
+        if (isspace(s) && lexeme.size() != 0) break;
+        
+
 
         c = tolower(s);
         switch (c)
@@ -103,7 +107,7 @@ void lexer(std::ifstream& file) {
 
             //check next char for special case
             file.get(c);
-            if (c == '=' || c =='>') lexeme.push_back(c);
+            if (c == '=' || c == '>') lexeme.push_back(c);
             else file.unget();            
             break;
 
@@ -197,7 +201,7 @@ void lexer(std::ifstream& file) {
             //check next char for special case
             file.get(c);
             if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
-            else if (file.eof()) done = true;
+            else if (file.eof()) {done = true; break;}
             file.unget();
             break;
 
@@ -210,7 +214,7 @@ void lexer(std::ifstream& file) {
             //check next char for special case
             file.get(c);
             if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
-            else if (file.eof()) done = true;
+            else if (file.eof()) {done = true; break;}
             file.unget();
             break;
 
@@ -233,7 +237,7 @@ void lexer(std::ifstream& file) {
             //check next char for special case
             file.get(c);
             if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
-            else if (file.eof()) done = true;
+            else if (file.eof()) {done = true; break;}
             file.unget();
             break;
 
@@ -246,7 +250,7 @@ void lexer(std::ifstream& file) {
             file.get(c);
             if (std::find(num.begin(), num.end(), c) == num.end()) {
                 unknown = true;
-                if (file.eof()) done = true;
+                if (file.eof()) {done = true; break;}
             }
             file.unget();
             break;
@@ -275,14 +279,14 @@ void lexer(std::ifstream& file) {
                 //check next char for special case
                 file.get(c);
                 if (std::find(opsep.begin(), opsep.end(), c) != opsep.end()) done = true;
-                else if (file.eof()) done = true;
+                else if (file.eof()) {done = true; break;}
                 file.unget();
             }
             break;
         }
     }
 
-    if (file.eof()) return;
+    //if (file.eof()) return;
     // check for keyword
     std::string temp(lexeme.begin(), lexeme.end());
     test = temp;
@@ -464,7 +468,7 @@ lexer(file); std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declara
     else {std::cout << "Expected #\n"; lexer(file);}
 
     if (!file.eof()) std::cout << "Expected EOF marker\n";
-    else std::cout << "                                                     End Of File";
+    std::cout << "                                                     End Of File\n";
 }
 
 
@@ -651,7 +655,7 @@ void declist(std::ifstream& file) {
 
     //if (test == std::string("int") || test == std::string("bool") || test == std::string("real"))
     if (test == "int" || test == "bool" || test == "real")
-    {std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";}
+    {std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>HHHHHHHHHHHHHHHHHHHHHHH\n";}
     //else return;
     
     decsuf(file);
@@ -713,27 +717,19 @@ void idsuffix(std::ifstream& file) {
 void statementlist(std::ifstream& file) {
 
     if ((token == "Identifier") || (test == "{" || "if" || "return" || "put" || "get" || "while")) {
-        std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";
-        statement(file);
-    }
-    else {
-        std::cout << "Expected { | Identifier | if | return | put | get | while\n"; 
-        lexer(file);
-    }
-    //std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";statement(file);
+        }
+    //else {std::cout << "Expected { | Identifier | if | return | put | get | while\n"; lexer(file);}
+    std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";statement(file);
 
-    if ((token == "Identifier") || (test == "{" || test == "if" || test == "return" || test == "put" || test == "get" || test == "while"))
-        {
-            std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n"; 
-            statementsuf(file);
-    }
-   
+    if (token == "Identifier" || test == "{" || test == "if" || test == "return" || test == "put" || test == "get" || test == "while")
+        {std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";}
+    statementsuf(file);
     //lexer(file);
 }
 
 void statementsuf(std::ifstream& file) {
     //std::cout << "<Statement List Suffix>  	->  <Statement List>  |  <empty>\n";
-    if ((token == "Identifier") || (test == "{" || test == "if" || test == "return" || test == "put" || test == "get" || test == "while")) {
+    if (token == "Identifier" || test == "{" || test == "if" || test == "return" || test == "put" || test == "get" || test == "while") {
         std::cout << "<Statement List Suffix>  	->  <Statement List>  |  <empty>\n";statementlist(file);}
     //else lexer(file);
     //lexer(file);
@@ -741,7 +737,7 @@ void statementsuf(std::ifstream& file) {
 
 void statement(std::ifstream& file) {
     //lexer(file);
-    if ((token == "Identifier") || (test == "{" || test == "if" || test == "return" || test == "put" || test == "get" || test == "while")) {
+    if (token == "Identifier" || test == "{" || test == "if" || test == "return" || test == "put" || test == "get" || test == "while") {
         std::cout << "<Statement>				->	<Compound>	|	<Assign>	|	<If>	|	<Return>	|	<Print>	|	<Scan>	|	<While>\n";
         if (test == "{") comp(file);
         else if (token == "Identifier") assign(file);
