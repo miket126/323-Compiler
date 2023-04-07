@@ -655,7 +655,7 @@ void declist(std::ifstream& file) {
 
     //if (test == std::string("int") || test == std::string("bool") || test == std::string("real"))
     if (test == "int" || test == "bool" || test == "real")
-    {std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>HHHHHHHHHHHHHHHHHHHHHHH\n";}
+    {std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";}
     //else return;
     
     decsuf(file);
