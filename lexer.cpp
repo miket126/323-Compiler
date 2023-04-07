@@ -103,7 +103,7 @@ void lexer(std::ifstream& file) {
 
             //check next char for special case
             file.get(c);
-            if (c == ('=' || '>')) lexeme.push_back(c);
+            if (c == '=' || c =='>') lexeme.push_back(c);
             else file.unget();            
             break;
 
@@ -651,7 +651,7 @@ void declist(std::ifstream& file) {
 
     //if (test == std::string("int") || test == std::string("bool") || test == std::string("real"))
     if (test == "int" || test == "bool" || test == "real")
-    {std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>HHHHHHHHHHHHHHHHHHHHHHH\n";}
+    {std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";}
     //else return;
     
     decsuf(file);
@@ -713,13 +713,21 @@ void idsuffix(std::ifstream& file) {
 void statementlist(std::ifstream& file) {
 
     if ((token == "Identifier") || (test == "{" || "if" || "return" || "put" || "get" || "while")) {
-        }
-    //else {std::cout << "Expected { | Identifier | if | return | put | get | while\n"; lexer(file);}
-    std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";statement(file);
+        std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";
+        statement(file);
+    }
+    else {
+        std::cout << "Expected { | Identifier | if | return | put | get | while\n"; 
+        lexer(file);
+    }
+    //std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";statement(file);
 
     if ((token == "Identifier") || (test == "{" || test == "if" || test == "return" || test == "put" || test == "get" || test == "while"))
-        {std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n";}
-    statementsuf(file);
+        {
+            std::cout << "<Statement List>			->	<Statement>	<Statement List Suffix>\n"; 
+            statementsuf(file);
+    }
+   
     //lexer(file);
 }
 
