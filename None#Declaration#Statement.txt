@@ -1,1 +1,0 @@
-#bool bool1, bool2, bool3; real real1, real2, real3; int int1, int2, int3;#return -bool1(bool2, bool3, real1, real2, real3);

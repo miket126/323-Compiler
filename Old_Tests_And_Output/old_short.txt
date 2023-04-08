@@ -1,4 +1,4 @@
-﻿function demoInts() int myInt, index;{ [*Test File that fulfills <10 lines requirement*]
+function demoInts() int myInt, index;{ [*Test File that fulfills <10 lines requirement*]
     get(myInt);
     index = 0;
     while(index <= 9) {

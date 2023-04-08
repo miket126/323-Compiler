@@ -8,8 +8,7 @@ function real2int (myReal real)
     {
         myInt = myInt + 1;
     }
-    endwhile
-    return myInt - -myInt;
+    return myInt - 1;
 }
 
 #
