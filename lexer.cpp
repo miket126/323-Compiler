@@ -21,7 +21,6 @@ std::vector<char> opsep = {'=', '!', '>', '<', '+', '-', '*', '/', '#', '(', ')'
 std::vector<std::string> keyword = {"int", "bool", "real", "if", "fi", "else", "return", "put", "get", "while", "endwhile", "true", "false", "function"};
 std::vector<char> num = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
-// Production Function Prototypes
 void lexer(std::ifstream &file)
 {
 
@@ -87,7 +86,6 @@ void lexer(std::ifstream &file)
     {
 
         file.get(s);
-        // if (isspace(s) && lexeme.size() == 0) continue;
         if (file.eof())
             return;
         if (isspace(s) && lexeme.size() != 0)
@@ -151,18 +149,6 @@ void lexer(std::ifstream &file)
             lexeme.push_back(c);
             token = "Operator";
             done = true;
-
-            /*
-            //check next char for special case
-            file.get(c);
-            if (c == ']') {
-                file.get(c);
-                if (file.eof()) {done = true; break;}
-                else {lexeme.clear(); skip = false; file.unget();}
-            }
-            else {file.unget();}
-            */
-
             break;
 
         case '#':
@@ -307,7 +293,6 @@ void lexer(std::ifstream &file)
                     }
                 }
             }
-            // else {lexeme.push_back('['); file.unget(); unknown = true;}
             break;
 
         case ' ':
@@ -333,7 +318,6 @@ void lexer(std::ifstream &file)
         }
     }
 
-    // if (file.eof()) return;
     //  check for keyword
     std::string temp(lexeme.begin(), lexeme.end());
     test = temp;
@@ -349,6 +333,7 @@ void lexer(std::ifstream &file)
     std::cout << std::endl;
 }
 
+// Production Function Prototypes
 void Rat32S(std::ifstream &file);
 
 void ofd(std::ifstream &file);
