@@ -6,7 +6,9 @@
 #include <algorithm>
 #include <iomanip>
 #include <cstring>
+#include <stack>
 
+// Global Variables for Parsing
 std::string token;
 std::vector<char> lexeme;
 int state = 1;
@@ -16,11 +18,33 @@ bool done = false;
 bool unknown = false;
 char c;
 char s;
+std::stack<int> jumpStack;
 
+// Terminal Symbols Vectors
 std::vector<char> opsep = {'=', '!', '>', '<', '+', '-', '*', '/', '#', '(', ')', '{', '}', ';', ','};
 std::vector<std::string> keyword = {"int", "bool", "real", "if", "fi", "else", "return", "put", "get", "while", "endwhile", "true", "false", "function"};
 std::vector<char> num = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
+// Begin Instruction Table
+struct
+{
+    int currAddress = 0;
+    int addr[1000];
+    std::vector<std::string> op = {};
+    int oprd[1000];
+} instrTable; // end Instruction Table
+
+// Begin Generate Instruction
+void gen_instr(std::string op, int oprd)
+{
+    instrTable.addr[instrTable.currAddress] = instrTable.currAddress + 1;
+    instrTable.op.at(instrTable.currAddress) = op;
+    instrTable.oprd[instrTable.currAddress] = oprd;
+
+    instrTable.currAddress += 1;
+} // end Generate Instruction
+
+// Begin Lexer
 void lexer(std::ifstream &file)
 {
 
@@ -331,7 +355,7 @@ void lexer(std::ifstream &file)
     for (auto x : lexeme)
         std::cout << x;
     std::cout << std::endl;
-}
+} // end lexer
 
 // Production Function Prototypes
 void Rat32S(std::ifstream &file);
