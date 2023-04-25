@@ -26,20 +26,20 @@ std::vector<std::string> keyword = {"int", "bool", "real", "if", "fi", "else", "
 std::vector<char> num = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
 // Begin Instruction Table
-struct
+struct InstructionTable
 {
     int currAddress = 0;
     int addr[1000];
-    std::vector<std::string> op = {};
+    std::vector<std::string> op = std::vector<std::string>(1000);
     int oprd[1000];
 } instrTable; // end Instruction Table
 
 // Begin Generate Instruction
-void gen_instr(std::string op, int oprd)
+void gen_instr(std::string opcode, int oprnd)
 {
     instrTable.addr[instrTable.currAddress] = instrTable.currAddress + 1;
-    instrTable.op.at(instrTable.currAddress) = op;
-    instrTable.oprd[instrTable.currAddress] = oprd;
+    instrTable.op[instrTable.currAddress] = opcode;
+    instrTable.oprd[instrTable.currAddress] = oprnd;
 
     instrTable.currAddress += 1;
 } // end Generate Instruction
