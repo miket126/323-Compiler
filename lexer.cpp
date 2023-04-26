@@ -44,6 +44,13 @@ void gen_instr(std::string opcode, int oprnd)
     instrTable.currAddress += 1;
 } // end Generate Instruction
 
+// Begin Back Patch
+void back_patch(int jmpAddr)
+{
+    int addr = jumpStack.top();
+    instrTable.oprd[addr] = jmpAddr;
+} // end Back Patch
+
 // Begin Lexer
 void lexer(std::ifstream &file)
 {
