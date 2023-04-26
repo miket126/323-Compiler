@@ -1145,6 +1145,9 @@ void while_(std::ifstream &file)
         std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
     else
         std::cout << "Expected while\n";
+
+    int addr = instrTable.currAddress;
+    gen_instr("LABEL", NULL);
     lexer(file);
 
     if (test == "(")
@@ -1165,6 +1168,8 @@ void while_(std::ifstream &file)
     {
         std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
         lexer(file);
+        gen_instr("JMP", addr);
+        back_patch(instrTable.currAddress);
     }
     else
     {
@@ -1193,6 +1198,48 @@ void cond(std::ifstream &file)
     exp(file);
 
     std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
+    /*
+        Since you can't switch on strings, we'll use a
+        if/elseif chain to determine which instruction to generate.
+        NOTE: Assuming that the token at this moment is the relational
+        operator.
+    */
+    if (test == "==")
+    {
+        gen_instr("EQU", NULL);
+        jumpStack.push(instrTable.currAddress);
+        gen_instr("JMPZ", NULL);
+    }
+    else if (test == "!=")
+    {
+        gen_instr("NEQ", NULL);
+        jumpStack.push(instrTable.currAddress);
+        gen_instr("JMPZ", NULL);
+    }
+    else if (test == ">")
+    {
+        gen_instr("GRT", NULL);
+        jumpStack.push(instrTable.currAddress);
+        gen_instr("JMPZ", NULL);
+    }
+    else if (test == "<")
+    {
+        gen_instr("LES", NULL);
+        jumpStack.push(instrTable.currAddress);
+        gen_instr("JMPZ", NULL);
+    }
+    else if (test == "<=")
+    {
+        gen_instr("LEQ", NULL);
+        jumpStack.push(instrTable.currAddress);
+        gen_instr("JMPZ", NULL);
+    }
+    else if (test == "=>")
+    {
+        gen_instr("GEQ", NULL);
+        jumpStack.push(instrTable.currAddress);
+        gen_instr("JMPZ", NULL);
+    }
     relop(file);
 
     std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
