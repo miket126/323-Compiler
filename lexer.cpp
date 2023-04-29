@@ -32,6 +32,7 @@ struct InstructionTable
     int addr[1000];
     std::vector<std::string> op = std::vector<std::string>(1000);
     int oprd[1000];
+    std::vector<std::string> ids = std::vector<std::string>(1000);
 } instrTable; // end Instruction Table
 
 // Begin Generate Instruction
@@ -50,6 +51,27 @@ void back_patch(int jmpAddr)
     int addr = jumpStack.top();
     instrTable.oprd[addr] = jmpAddr;
 } // end Back Patch
+
+// Begin Get Address (this is for variable declaration)
+int get_addr(std::string var)
+{
+    auto it = std::find(instrTable.ids.begin(), instrTable.ids.end(), var);
+    int addr;
+
+    // Identifier has not been declared; add it to the instruction table
+    if (it == instrTable.ids.end())
+    {
+        instrTable.ids.push_back(var);
+        addr = instrTable.ids.size() + 5000;
+    }
+    // Identifer has already been initalized; return its address
+    else
+    {
+        addr = (it - instrTable.ids.begin()) + 5000;
+    }
+
+    return addr;
+} // end Get Address
 
 // Begin Lexer
 void lexer(std::ifstream &file)
