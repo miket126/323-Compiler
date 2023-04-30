@@ -925,6 +925,7 @@ void assign(std::ifstream &file)
     else
         std::cout << "Expected Identifier\n";
 
+    std::string save = test;
     lexer(file);
     if (test == "=")
     {
@@ -939,6 +940,7 @@ void assign(std::ifstream &file)
 
     std::cout << "<Assign>					->	<Identifier> = <Expression>;\n";
     exp(file);
+    gen_instr("POPM", get_addr(save));
 
     if (test == ";")
     {
@@ -1304,6 +1306,8 @@ void exprime(std::ifstream &file)
         std::cout << "<Expression Prime>			->  +<Term> <Expression Prime> | -<Term><Expression Prime>  |  <empty>\n";
         term(file);
 
+        gen_instr("ADD", NULL);
+
         if (test == "+" || test == "-")
         {
             std::cout << "<Expression Prime>			->  +<Term> <Expression Prime> | -<Term><Expression Prime>  |  <empty>\n";
@@ -1335,6 +1339,8 @@ void termprime(std::ifstream &file)
         std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
         factor(file);
 
+        gen_instr("MUL", NULL);
+
         if (test == "*" || test == "/")
         {
             std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
@@ -1349,6 +1355,8 @@ void factor(std::ifstream &file)
 {
     if (test == "-")
     {
+        gen_instr("PUSHM", get_addr(test));
+
         std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
         lexer(file);
         std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
