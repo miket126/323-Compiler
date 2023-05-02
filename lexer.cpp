@@ -22,7 +22,7 @@ std::stack<int> jumpStack;
 
 // Terminal Symbols Vectors
 std::vector<char> opsep = {'=', '!', '>', '<', '+', '-', '*', '/', '#', '(', ')', '{', '}', ';', ','};
-std::vector<std::string> keyword = {"int", "bool", "real", "if", "fi", "else", "return", "put", "get", "while", "endwhile", "true", "false", "function"};
+std::vector<std::string> keyword = {"int", "bool", "if", "fi", "else", "return", "put", "get", "while", "endwhile", "true", "false", "function"};
 std::vector<char> num = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
 // Begin Instruction Table
@@ -33,7 +33,10 @@ struct InstructionTable
     std::vector<std::string> op = std::vector<std::string>(1000);
     int oprd[1000];
     std::vector<std::string> ids = std::vector<std::string>(1000);
-} instrTable; // end Instruction Table
+    std::vector<std::string> type = std::vector<std::string>(1000);
+} 
+instrTable; // end Instruction Table
+InstructionTable symTable;
 
 // Begin Generate Instruction
 void gen_instr(std::string opcode, int oprnd)
@@ -55,23 +58,39 @@ void back_patch(int jmpAddr)
 // Begin Get Address (this is for variable declaration)
 int get_addr(std::string var)
 {
-    auto it = std::find(instrTable.ids.begin(), instrTable.ids.end(), var);
-    int addr;
+    auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
+    int ad;
 
-    // Identifier has not been declared; add it to the instruction table
-    if (it == instrTable.ids.end())
-    {
-        instrTable.ids.push_back(var);
-        addr = instrTable.ids.size() + 5000;
+    //Identifier used without initialization
+    if (it == symTable.ids.end()) {
+        std::cerr << "Item has not been initialized\n";
+        return -1;
     }
     // Identifer has already been initalized; return its address
-    else
-    {
-        addr = (it - instrTable.ids.begin()) + 5000;
-    }
+    ad = (it - symTable.ids.begin()) + 5000;
 
-    return addr;
+    return ad;
 } // end Get Address
+
+void check_sym(std::string var) {
+    auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
+    int ad;
+
+    // Identifier has not been declared; add it to the symbol table
+    if (it == symTable.ids.end()) 
+    {   
+        symTable.ids[symTable.currAddress] = var;
+        //symTable.ids.push_back(var);
+        ad = symTable.ids.size() + 5000;
+        symTable.addr[symTable.currAddress] = ad;
+        symTable.type[symTable.currAddress] = token;
+        symTable.currAddress++;
+    }
+    // Identifier has already been added; cannot initialize again
+    else {
+        std::cerr << "Item has been initialized\n";
+    }
+}
 
 // Begin Lexer
 void lexer(std::ifstream &file)
@@ -79,7 +98,7 @@ void lexer(std::ifstream &file)
 
     int dfsm[10][5];
 
-    // All 3 in 1, int real identifer dfsm
+    // All 3 in 1, int identifer dfsm
     dfsm[1][1] = 3;
     dfsm[1][2] = 2;
     dfsm[1][3] = 9;
@@ -294,7 +313,7 @@ void lexer(std::ifstream &file)
             if (state == 2)
                 token = "Integer";
             else if (state == 8)
-                token = "Real";
+                token = "Unknown";
             else if (state == 6)
                 token = "Identifier";
 
@@ -525,21 +544,23 @@ void Rat32S(std::ifstream &file)
 
     lexer(file);
 
+    /* Simplified Rat23S
     if (test == "function")
     {
         std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
     }
 
     ofd(file);
+    */
 
     if (test == "#")
     {
-        std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
+        std::cout << "<Rat23S> -> 	# <Opt Declaration List> # <Statement List>\n";
         lexer(file);
 
-        if (test == "int" || test == "bool" || test == "real")
+        if (test == "int" || test == "bool")
         {
-            std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
+            std::cout << "<Rat23S> -> 	# <Opt Declaration List> # <Statement List>\n";
         }
         odl(file);
     }
@@ -551,9 +572,9 @@ void Rat32S(std::ifstream &file)
 
     if (test == "#")
     {
-        std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
+        std::cout << "<Rat23S> -> 	# <Opt Declaration List> # <Statement List>\n";
         lexer(file);
-        std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
+        std::cout << "<Rat23S> -> 	# <Opt Declaration List> # <Statement List>\n";
         statementlist(file);
     }
     else
@@ -567,6 +588,7 @@ void Rat32S(std::ifstream &file)
     std::cout << "                                                     End Of File\n";
 }
 
+/* Simplified Rat23S
 // Rule 2
 void ofd(std::ifstream &file)
 {
@@ -655,7 +677,7 @@ void func(std::ifstream &file)
         lexer(file);
     }
 
-    if (test == "int" || test == "bool" || test == "real")
+    if (test == "int" || test == "bool")
     {
         std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
     }
@@ -664,6 +686,8 @@ void func(std::ifstream &file)
     std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
     body(file);
 }
+*/
+
 
 // Rule 6
 void opl(std::ifstream &file)
@@ -714,13 +738,13 @@ void param(std::ifstream &file)
 // Rule 10
 void qualifier(std::ifstream &file)
 {
-    if (test == "int" || test == "bool" || test == "real")
+    if (test == "int" || test == "bool")
     {
-        std::cout << "<Qualifier> -> int   |    bool   |  real\n";
+        std::cout << "<Qualifier> -> int   |    bool   \n";
     }
     else
     {
-        std::cout << "Expected: int   |    bool   |  real\n";
+        std::cout << "Expected: int   |    bool   \n";
     }
 
     lexer(file);
@@ -755,7 +779,7 @@ void body(std::ifstream &file)
 // Rule 12
 void odl(std::ifstream &file)
 {
-    if (test == "int" || test == "bool" || test == "real")
+    if (test == "int" || test == "bool")
     {
         std::cout << "<Opt Declaration List>		->	<Declaration List> | <Empty>\n";
         declist(file);
@@ -775,7 +799,7 @@ void declist(std::ifstream &file)
 
     lexer(file);
 
-    if (test == "int" || test == "bool" || test == "real")
+    if (test == "int" || test == "bool")
     {
         std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";
     }
@@ -786,7 +810,7 @@ void declist(std::ifstream &file)
 // Rule 14
 void decsuf(std::ifstream &file)
 {
-    if (test == "int" || test == "bool" || test == "real")
+    if (test == "int" || test == "bool")
     {
         std::cout << "<Declaration List Suffix> 	->  <Declaration List>  |  <empty>\n";
         declist(file);
@@ -1372,16 +1396,16 @@ void factor(std::ifstream &file)
 // Rule 37
 void primary(std::ifstream &file)
 {
-    if ((token == "Identifier" || token == "Real" || token == "Integer") || (test == "(" || test == "true" || test == "false"))
+    if ((token == "Identifier" || token == "Integer") || (test == "(" || test == "true" || test == "false"))
     {
-        std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   <Real>  |   true   |  false\n";
+        std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
         if (token == "Identifier")
         {
             lexer(file);
 
             if (test == "(")
             {
-                std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   <Real>  |   true   |  false\n";
+                std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
             }
             identifiersuf(file);
         }
@@ -1389,10 +1413,10 @@ void primary(std::ifstream &file)
         else if (test == "(")
         {
             lexer(file);
-            std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   <Real>  |   true   |  false\n";
+            std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
             exp(file);
             if (test == ")")
-                std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   <Real>  |   true   |  false\n";
+                std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
             else
                 std::cout << "Expected )\n";
             lexer(file);
@@ -1402,7 +1426,7 @@ void primary(std::ifstream &file)
     }
     else
     {
-        std::cout << "Expected Identifier | Real | Integer | ( | true | false\n";
+        std::cout << "Expected Identifier | Integer | ( | true | false\n";
         lexer(file);
     }
 }
