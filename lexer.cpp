@@ -566,7 +566,7 @@ void Rat32S(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected #\n";
+        std::cout << "Expected #\n";
         lexer(file);
     }
 
@@ -579,12 +579,12 @@ void Rat32S(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected #\n";
+        std::cout << "Expected #\n";
         lexer(file);
     }
 
-    if (!file.eof()){}
-        //std::cout << "Expected EOF marker\n";
+    if (!file.eof())
+        std::cout << "Expected EOF marker\n";
     std::cout << "                                                     End Of File\n";
 }
 
@@ -744,7 +744,7 @@ void qualifier(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected: int   |    bool   \n";
+        std::cout << "Expected: int   |    bool   \n";
     }
 
     lexer(file);
@@ -760,7 +760,7 @@ void body(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected {\n";
+        std::cout << "Expected {\n";
         lexer(file);
     }
 
@@ -771,8 +771,8 @@ void body(std::ifstream &file)
     {
         //std::cout << "<Body>						->	{ <Statement List> }\n";
     }
-    else{}
-        //std::cout << "Expected }\n";
+    else
+        std::cout << "Expected }\n";
     lexer(file);
 }
 
@@ -794,8 +794,8 @@ void declist(std::ifstream &file)
 
     if (test == ";")
         //std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";
-    else{}
-        //std::cout << "Expected ;\n";
+    else
+        std::cout << "Expected ;\n";
 
     lexer(file);
 
@@ -837,7 +837,7 @@ void ids(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected Identifier\n";
+        std::cout << "Expected Identifier\n";
         lexer(file);
     }
 
@@ -907,7 +907,7 @@ void statement(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected { | Identifier | if | return | put | get | while\n";
+        std::cout << "Expected { | Identifier | if | return | put | get | while\n";
         lexer(file);
     }
 }
@@ -922,7 +922,7 @@ void comp(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected {\n";
+        std::cout << "Expected {\n";
         lexer(file);
     }
 
@@ -936,7 +936,7 @@ void comp(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected }\n";
+        std::cout << "Expected }\n";
         lexer(file);
     }
 }
@@ -946,8 +946,8 @@ void assign(std::ifstream &file)
 {
     if (token == "Identifier"){}
         //std::cout << "<Assign>					->	<Identifier> = <Expression>;\n";
-    else{}
-        //std::cout << "Expected Identifier\n";
+    else
+        std::cout << "Expected Identifier\n";
 
     std::string save = test;
     lexer(file);
@@ -958,7 +958,7 @@ void assign(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected =\n";
+        std::cout << "Expected =\n";
         lexer(file);
     }
 
@@ -973,7 +973,7 @@ void assign(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected ;\n";
+        std::cout << "Expected ;\n";
         lexer(file);
     }
 }
@@ -981,11 +981,14 @@ void assign(std::ifstream &file)
 // Rule 23
 void if_(std::ifstream &file)
 {
-    if (test == "if")
+    if (test == "if") {
+       addr = instr_address;
+       gen_instr(“LABEL”, nil);
+    }
         //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
     else
     {
-        //std::cout << "Expected if\n";
+        std::cout << "Expected if\n";
     }
 
     lexer(file);
@@ -996,7 +999,7 @@ void if_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected (\n";
+        std::cout << "Expected (\n";
         lexer(file);
     }
 
@@ -1010,13 +1013,15 @@ void if_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected )\n";
+        std::cout << "Expected )\n";
         lexer(file);
     }
 
     //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
     statement(file);
     //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
+    gen_instr(JMP, addr);
+    back_patch (instr_address);
     ifsuf(file);
 }
 
@@ -1041,13 +1046,13 @@ void ifsuf(std::ifstream &file)
         }
         else
         {
-            //std::cout << "Expected fi\n";
+            std::cout << "Expected fi\n";
             lexer(file);
         }
     }
     else
     {
-        //std::cout << "Expected fi | else\n";
+        std::cout << "Expected fi | else\n";
         lexer(file);
     }
 }
@@ -1062,7 +1067,7 @@ void return_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected return\n";
+        std::cout << "Expected return\n";
         lexer(file);
     }
 
@@ -1090,7 +1095,7 @@ void returnsuf(std::ifstream &file)
         }
         else
         {
-            //std::cout << "Expected ;\n";
+            std::cout << "Expected ;\n";
             lexer(file);
         }
     }
@@ -1101,8 +1106,8 @@ void print_(std::ifstream &file)
 {
     if (test == "put")
         //std::cout << "<Print>					->	put(<Expression>);\n";
-    else{}
-        //std::cout << "Expected put\n";
+    else
+        std::cout << "Expected put\n";
     lexer(file);
 
     if (test == "(")
@@ -1112,7 +1117,7 @@ void print_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected (\n";
+        std::cout << "Expected (\n";
         lexer(file);
     }
     //std::cout << "<Print>					->	put(<Expression>);\n";
@@ -1125,7 +1130,7 @@ void print_(std::ifstream &file)
     }
     else
     {
-        //std ::cout << "Expected )\n";
+        std ::cout << "Expected )\n";
         lexer(file);
     }
 
@@ -1136,7 +1141,7 @@ void print_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected ;\n";
+        std::cout << "Expected ;\n";
         lexer(file);
     }
 }
@@ -1146,8 +1151,8 @@ void scan(std::ifstream &file)
 {
     if (test == "get")
         //std::cout << "<Scan>						->	get(<IDs>);\n";
-    else{}
-        //std::cout << "Expected get\n";
+    else
+        std::cout << "Expected get\n";
     lexer(file);
 
     if (test == "(")
@@ -1157,7 +1162,7 @@ void scan(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected (\n";
+        std::cout << "Expected (\n";
         lexer(file);
     }
     //std::cout << "<Scan>						->	get(<IDs>);\n";
@@ -1170,7 +1175,7 @@ void scan(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected )\n";
+        std::cout << "Expected )\n";
         lexer(file);
     }
 
@@ -1181,7 +1186,7 @@ void scan(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected ;\n";
+        std::cout << "Expected ;\n";
         lexer(file);
     }
 }
@@ -1191,8 +1196,8 @@ void while_(std::ifstream &file)
 {
     if (test == "while")
         //std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
-    else{}
-        //std::cout << "Expected while\n";
+    else
+        std::cout << "Expected while\n";
 
     int addr = instrTable.currAddress;
     gen_instr("LABEL", NULL);
@@ -1205,7 +1210,7 @@ void while_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected (\n";
+        std::cout << "Expected (\n";
         lexer(file);
     }
 
@@ -1221,7 +1226,7 @@ void while_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected )\n";
+        std::cout << "Expected )\n";
         lexer(file);
     }
 
@@ -1234,7 +1239,7 @@ void while_(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected endwhile\n";
+        std::cout << "Expected endwhile\n";
         lexer(file);
     }
 }
@@ -1301,8 +1306,8 @@ void relop(std::ifstream &file)
     {
         //std::cout << "<Relop> ->        ==   |   !=    |   >     |   <    |  <=   |    => \n";
     }
-    else{}
-        //std::cout << "Expected ==   |   !=    |   >     |   <    |  <=   |    =>\n";
+    else
+        std::cout << "Expected ==   |   !=    |   >     |   <    |  <=   |    =>\n";
 
     lexer(file);
 }
@@ -1417,8 +1422,8 @@ void primary(std::ifstream &file)
             exp(file);
             if (test == ")")
                 //std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
-            else{}
-                //std::cout << "Expected )\n";
+            else
+                std::cout << "Expected )\n";
             lexer(file);
         }
         else
@@ -1426,7 +1431,7 @@ void primary(std::ifstream &file)
     }
     else
     {
-        //std::cout << "Expected Identifier | Integer | ( | true | false\n";
+        std::cout << "Expected Identifier | Integer | ( | true | false\n";
         lexer(file);
     }
 }
@@ -1449,7 +1454,7 @@ void identifiersuf(std::ifstream &file)
         }
         else
         {
-            //std::cout << "Expected )\n";
+            std::cout << "Expected )\n";
             lexer(file);
         }
     }
