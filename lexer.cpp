@@ -41,10 +41,9 @@ InstructionTable symTable;
 // Begin Generate Instruction
 void gen_instr(std::string opcode, int oprnd)
 {
-    instrTable.addr[instrTable.currAddress] = instrTable.currAddress + 1;
+    instrTable.addr[instrTable.currAddress] = instrTable.currAddress;
     instrTable.op[instrTable.currAddress] = opcode;
     instrTable.oprd[instrTable.currAddress] = oprnd;
-
     instrTable.currAddress += 1;
 } // end Generate Instruction
 
@@ -52,6 +51,7 @@ void gen_instr(std::string opcode, int oprnd)
 void back_patch(int jmpAddr)
 {
     int addr = jumpStack.top();
+    jumpStack.pop();
     instrTable.oprd[addr] = jmpAddr;
 } // end Back Patch
 
@@ -549,7 +549,6 @@ void Rat32S(std::ifstream &file)
     {
         std::cout << "<Rat23S> -> 	<Opt Function Definition> # <Opt Declaration List> # <Statement List>\n";
     }
-
     ofd(file);
     */
 
@@ -598,20 +597,17 @@ void ofd(std::ifstream &file)
         funcdef(file);
     }
 }
-
 // Rule 3
 void funcdef(std::ifstream &file)
 {
     std::cout << "<Function Definitions>		->	<Function> <Function Suffix>\n";
     func(file);
-
     if (test == "function")
     {
         std::cout << "<Function Definitions>		->	<Function> <Function Suffix>\n";
     }
     funcsuf(file);
 }
-
 // Rule 4
 void funcsuf(std::ifstream &file)
 {
@@ -621,7 +617,6 @@ void funcsuf(std::ifstream &file)
         funcdef(file);
     }
 }
-
 // Rule 5
 void func(std::ifstream &file)
 {
@@ -635,7 +630,6 @@ void func(std::ifstream &file)
         std::cout << "Expected function\n";
         lexer(file);
     }
-
     if (token == "Identifier")
     {
         std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
@@ -646,11 +640,9 @@ void func(std::ifstream &file)
         std::cout << "Expected Identifier\n";
         lexer(file);
     }
-
     if (test == "(")
     {
         std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
-
         lexer(file);
     }
     else
@@ -658,17 +650,14 @@ void func(std::ifstream &file)
         std::cout << "Expected (\n";
         lexer(file);
     }
-
     if (token == "Identifier")
     {
         std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
     }
     opl(file);
-
     if (test == ")")
     {
         std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
-
         lexer(file);
     }
     else
@@ -676,13 +665,11 @@ void func(std::ifstream &file)
         std::cout << "Expected )\n";
         lexer(file);
     }
-
     if (test == "int" || test == "bool")
     {
         std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
     }
     odl(file);
-
     std::cout << "<Function>				-> 	function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>\n";
     body(file);
 }
@@ -792,7 +779,7 @@ void declist(std::ifstream &file)
     //std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";
     dec(file);
 
-    if (test == ";")
+    if (test == ";"){}
         //std::cout << "<Declaration List>			-> 	<Declaration>; <Declaration List Suffix>\n";
     else
         std::cout << "Expected ;\n";
@@ -981,16 +968,17 @@ void assign(std::ifstream &file)
 // Rule 23
 void if_(std::ifstream &file)
 {
+    int addr;
     if (test == "if") {
-       addr = instr_address;
-       gen_instr(“LABEL”, nil);
+        addr = instrTable.currAddress;
+        gen_instr("LABEL", NULL);
     }
         //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
     else
     {
         std::cout << "Expected if\n";
     }
-
+    
     lexer(file);
     if (test == "(")
     {
@@ -1020,28 +1008,38 @@ void if_(std::ifstream &file)
     //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
     statement(file);
     //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
-    gen_instr(JMP, addr);
-    back_patch (instr_address);
+    jumpStack.push(instrTable.currAddress);     //push 2nd element in stack in case of else
     ifsuf(file);
 }
 
 // Rule 24
 void ifsuf(std::ifstream &file)
 {
+    int addr = instrTable.currAddress;
     if (test == "fi")
     {
         //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
+        back_patch(instrTable.currAddress);     // jump to fi label when if cond is false
+        gen_instr("LABEL", NULL);               // fi label
+        jumpStack.pop();                        // pop 2nd element when no else is used
         lexer(file);
     }
     else if (test == "else")
     {
         //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
+        gen_instr("JMP", NULL);                 // If cond true -> jump out after statement 
+        back_patch(instrTable.currAddress);     // If cond false -> jump to else label, 1st element in stack
+        gen_instr("LABEL", NULL);               // else label
         lexer(file);
         //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
         statement(file);
+
+        back_patch(instrTable.currAddress);     // Jump to fi label when if cond true, 2nd element in stack
+        gen_instr("LABEL", NULL);               // fi label
         if (test == "fi")
         {
             //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
+
             lexer(file);
         }
         else
@@ -1104,7 +1102,7 @@ void returnsuf(std::ifstream &file)
 // Rule 27
 void print_(std::ifstream &file)
 {
-    if (test == "put")
+    if (test == "put"){}
         //std::cout << "<Print>					->	put(<Expression>);\n";
     else
         std::cout << "Expected put\n";
@@ -1137,6 +1135,7 @@ void print_(std::ifstream &file)
     if (test == ";")
     {
         //std::cout << "<Print>					->	put(<Expression>);\n";
+        gen_instr("OUT", NULL);
         lexer(file);
     }
     else
@@ -1149,7 +1148,7 @@ void print_(std::ifstream &file)
 // Rule 28
 void scan(std::ifstream &file)
 {
-    if (test == "get")
+    if (test == "get"){}
         //std::cout << "<Scan>						->	get(<IDs>);\n";
     else
         std::cout << "Expected get\n";
@@ -1166,6 +1165,8 @@ void scan(std::ifstream &file)
         lexer(file);
     }
     //std::cout << "<Scan>						->	get(<IDs>);\n";
+    gen_instr("IN", NULL);
+    gen_instr("POPM", get_addr(test));
     ids(file);
 
     if (test == ")")
@@ -1194,13 +1195,16 @@ void scan(std::ifstream &file)
 // Rule 29
 void while_(std::ifstream &file)
 {
-    if (test == "while")
+    int addr;
+    if (test == "while"){
+        addr = instrTable.currAddress;
+        gen_instr("LABEL", NULL);
+    }
         //std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
     else
         std::cout << "Expected while\n";
 
-    int addr = instrTable.currAddress;
-    gen_instr("LABEL", NULL);
+    
     lexer(file);
 
     if (test == "(")
@@ -1221,8 +1225,6 @@ void while_(std::ifstream &file)
     {
         //std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
         lexer(file);
-        gen_instr("JMP", addr);
-        back_patch(instrTable.currAddress);
     }
     else
     {
@@ -1232,9 +1234,13 @@ void while_(std::ifstream &file)
 
     //std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
     statement(file);
+
+    gen_instr("JMP", addr);
+    back_patch(instrTable.currAddress);
     if (test == "endwhile")
     {
         //std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
+        gen_instr("LABEL", NULL);
         lexer(file);
     }
     else
@@ -1384,16 +1390,18 @@ void factor(std::ifstream &file)
 {
     if (test == "-")
     {
-        gen_instr("PUSHM", get_addr(test));
+        
 
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
         lexer(file);
+        gen_instr("PUSHM", get_addr(test));
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
         primary(file);
     }
     else
     {
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
+        gen_instr("PUSHM", get_addr(test));
         primary(file);
     }
 }
@@ -1420,7 +1428,7 @@ void primary(std::ifstream &file)
             lexer(file);
             //std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
             exp(file);
-            if (test == ")")
+            if (test == ")"){}
                 //std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
             else
                 std::cout << "Expected )\n";
