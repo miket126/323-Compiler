@@ -1,37 +1,24 @@
 [*Test File that fulfills >21 lines requirement*]
-function compareIntsWithFlag(IDS1, IDS2 int, IDS3, IDS4 bool)
-    int myInt, index; real myReal;
-{ 
-    get(myInt);
-    index = 0;
-    myReal = 1.1;
-    if(IDS3 == true) 
-    {
-        put(myInt + IDS1 + index * myReal); 
-        IDS3 = false;
-    } 
-    else
-        if(IDS4 == true)put(myInt + IDS2);fi 
-    fi
+#
+int sum, i, max; bool value; int a, b, c;
+#
+
+value = true;
+sum = 10;
+i = 5;
+
+get (max);
+while (i =>  (max + a))  {
+        sum = sum / i;
+        i  = i * 1;
 }
-function otherFunction()int myInt; int otherInt; bool real1;{return;}
-function finalFunction ( ) { return ; }
-#
-int IDS1, IDS2, otherInt; bool IDS3, IDS4;
-#
-IDS1 = 1;
-IDS2 = 2;
-otherInt = -1;
-IDS3 = true;
-IDS4 = false;
-put(compareIntsWithFlag(IDS1, IDS2, IDS3, IDS4));
-while(false => -(IDS4 + otherInt))
-    while(true != IDS3)
-        {
-            while(true > IDS4)
-                return;
-            endwhile
-            return;
-        }
-    endwhile
 endwhile
+
+
+if (a < b)  {
+    a = c;
+} else {
+    a = b;
+} fi
+
+put (sum - max);

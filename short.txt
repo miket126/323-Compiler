@@ -1,9 +1,9 @@
-﻿function demoInts() int myInt, index;{ [*Test File that fulfills <10 lines requirement and is UTF-8 w/ BOM encoded*]
-    get(myInt);
-    index = 0;
-    while(index <= 9) {
-        put(myInt + index); 
-        index = index + 1;
-    } 
-    endwhile
-}##return;
+﻿#
+bool testBool; int testBool; int testInt, a, b, c;
+#
+
+get(testBool);
+return testInt + testBool;
+testInt = testBol;
+if (a < b)  a =  c;  fi
+put(testInt);
