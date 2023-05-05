@@ -19,6 +19,7 @@ bool unknown = false;
 char c;
 char s;
 std::stack<int> jumpStack;
+std::stack<std::string> typeStack;
 
 // Terminal Symbols Vectors
 std::vector<char> opsep = {'=', '!', '>', '<', '+', '-', '*', '/', '#', '(', ')', '{', '}', ';', ','};
@@ -29,7 +30,9 @@ std::vector<char> num = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 struct InstructionTable
 {
     int currAddress = 0;
-    int addr[1000];
+    int symAddress = 5000;
+    //int addr[1000];
+    std::vector<int> addr = std::vector<int>(1000);
     std::vector<std::string> op = std::vector<std::string>(1000);
     int oprd[1000];
     std::vector<std::string> ids = std::vector<std::string>(1000);
@@ -61,9 +64,13 @@ int get_addr(std::string var)
     auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
     int ad;
 
-    //Identifier used without initialization
+    // If var is integer, true, false
+    
+
+
+    //  Identifier used without initialization
     if (it == symTable.ids.end()) {
-        std::cerr << "Item has not been initialized\n";
+        std::cout << "                          " << var << " has not been initialized\n\n";
         return -1;
     }
     // Identifer has already been initalized; return its address
@@ -72,26 +79,49 @@ int get_addr(std::string var)
     return ad;
 } // end Get Address
 
-void check_sym(std::string var) {
+void init_sym(std::string var) {
     auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
-    int ad;
+    //int ad;
 
     // Identifier has not been declared; add it to the symbol table
     if (it == symTable.ids.end()) 
     {   
         symTable.ids[symTable.currAddress] = var;
         //symTable.ids.push_back(var);
-        ad = symTable.ids.size() + 5000;
-        symTable.addr[symTable.currAddress] = ad;
-        symTable.type[symTable.currAddress] = token;
+        //ad = symTable.symAddress;
+        symTable.addr[symTable.currAddress] = symTable.symAddress;
+        symTable.type[symTable.currAddress] = typeStack.top();
         symTable.currAddress++;
+        symTable.symAddress++;
     }
-    // Identifier has already been added; cannot initialize again
+    
     else {
-        std::cerr << "Item has been initialized\n";
+        //std::cerr << "Item has been initialized\n";
     }
 }
 
+void check_sym(std::string var) {
+    auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
+    // Identifier has already been added; cannot initialize again
+    if (it != symTable.ids.end()) std::cout << "                            " << var << " has already been initialized\n\n";
+}
+
+void type_check(int ad) {
+    int first, second;
+    int a,b;
+
+    //get identifier address
+    first = instrTable.oprd[ad - 2];            
+    second = instrTable.oprd[ad - 1];
+
+    //get identifier index
+    auto it = std::find(symTable.addr.begin(), symTable.addr.end(), first);
+    a = it - symTable.addr.begin();
+    auto ti = std::find(symTable.addr.begin(), symTable.addr.end(), second);
+    b = ti - symTable.addr.begin();
+
+    if (symTable.type[a] != symTable.type[b]) std::cout << "                            Incompatible Type Operation\n";
+}
 // Begin Lexer
 void lexer(std::ifstream &file)
 {
@@ -398,7 +428,7 @@ void lexer(std::ifstream &file)
     else if ((state == 9) || unknown)
         token = "Unknown";
 
-    std::cout << "\n\n\n";
+    //std::cout << "\n\n\n";
     std::cout << std::left << std::setw(15) << token;
     for (auto x : lexeme)
         std::cout << x;
@@ -527,11 +557,39 @@ int main(int argc, const char *argv[])
     removebom(file);
 
     std::cout << std::left << std::setw(15) << "Token"
-              << "Lexeme\n";
+              << "Lexeme\n\n";
 
     while (!file.eof())
     {
         Rat32S(file);
+    }
+
+    // Print Symbol Table
+    std::cout << "\n    Symbol Table\n"
+                << std::left << std::setw(15) << "Index" 
+                << std::left << std::setw(15) << "Identifier"
+                << std::left << std::setw(15) << "Address"            
+                << "Type\n";
+
+    for (int i = 0; i < symTable.currAddress; i++) {
+        std::cout   << std::left << std::setw(15) << i 
+                    << std::left << std::setw(15) << symTable.ids[i]
+                    << std::left << std::setw(15) << symTable.addr[i]           //5000 address 
+                    << symTable.type[i] 
+                    << std::endl;
+    }
+
+    // Print Instruction Table
+    std::cout << "\n    Instruction Table\n"
+                << std::left << std::setw(15) << "Index" 
+                << std::left << std::setw(15) << "Operation" 
+                << "Operand\n";
+
+    for (int i = 0; i < instrTable.currAddress; i++) {
+        std::cout   << std::left << std::setw(15) << instrTable.addr[i]           //index number 
+                    << std::left << std::setw(15) << instrTable.op[i] 
+                    << instrTable.oprd[i]
+                    << std::endl; 
     }
 
     file.close();
@@ -728,6 +786,7 @@ void qualifier(std::ifstream &file)
     if (test == "int" || test == "bool")
     {
         //std::cout << "<Qualifier> -> int   |    bool   \n";
+        typeStack.push(test);
     }
     else
     {
@@ -811,7 +870,9 @@ void dec(std::ifstream &file)
     qualifier(file);
 
     //std::cout << "<Declaration>				-> 	<Qualifier> <IDs>\n";
+    check_sym(test);                            //check if symbol already declared earlier
     ids(file);
+    typeStack.pop();
 }
 
 // Rule 16
@@ -820,6 +881,7 @@ void ids(std::ifstream &file)
     if (token == "Identifier")
     {
         //std::cout << "<IDs>						->	<Identifier> <IDs Suffix>\n";
+        init_sym(test);
         lexer(file);
     }
     else
@@ -971,7 +1033,7 @@ void if_(std::ifstream &file)
     int addr;
     if (test == "if") {
         addr = instrTable.currAddress;
-        gen_instr("LABEL", NULL);
+        gen_instr("LABEL", -1);
     }
         //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
     else
@@ -1020,22 +1082,22 @@ void ifsuf(std::ifstream &file)
     {
         //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
         back_patch(instrTable.currAddress);     // jump to fi label when if cond is false
-        gen_instr("LABEL", NULL);               // fi label
+        gen_instr("LABEL", -1);               // fi label
         jumpStack.pop();                        // pop 2nd element when no else is used
         lexer(file);
     }
     else if (test == "else")
     {
         //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
-        gen_instr("JMP", NULL);                 // If cond true -> jump out after statement 
+        gen_instr("JMP", -1);                 // If cond true -> jump out after statement 
         back_patch(instrTable.currAddress);     // If cond false -> jump to else label, 1st element in stack
-        gen_instr("LABEL", NULL);               // else label
+        gen_instr("LABEL", -1);               // else label
         lexer(file);
         //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
         statement(file);
 
         back_patch(instrTable.currAddress);     // Jump to fi label when if cond true, 2nd element in stack
-        gen_instr("LABEL", NULL);               // fi label
+        gen_instr("LABEL", -1);               // fi label
         if (test == "fi")
         {
             //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
@@ -1135,7 +1197,7 @@ void print_(std::ifstream &file)
     if (test == ";")
     {
         //std::cout << "<Print>					->	put(<Expression>);\n";
-        gen_instr("OUT", NULL);
+        gen_instr("OUT", -1);
         lexer(file);
     }
     else
@@ -1165,7 +1227,7 @@ void scan(std::ifstream &file)
         lexer(file);
     }
     //std::cout << "<Scan>						->	get(<IDs>);\n";
-    gen_instr("IN", NULL);
+    gen_instr("IN", -1);
     gen_instr("POPM", get_addr(test));
     ids(file);
 
@@ -1198,7 +1260,7 @@ void while_(std::ifstream &file)
     int addr;
     if (test == "while"){
         addr = instrTable.currAddress;
-        gen_instr("LABEL", NULL);
+        gen_instr("LABEL", -1);
     }
         //std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
     else
@@ -1240,7 +1302,7 @@ void while_(std::ifstream &file)
     if (test == "endwhile")
     {
         //std::cout << "<While>					->	while(<Condition>) <Statement> endwhile\n";
-        gen_instr("LABEL", NULL);
+        gen_instr("LABEL", -1);
         lexer(file);
     }
     else
@@ -1265,39 +1327,45 @@ void cond(std::ifstream &file)
     */
     if (test == "==")
     {
-        gen_instr("EQU", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("EQU", -1);
         jumpStack.push(instrTable.currAddress);
-        gen_instr("JMPZ", NULL);
+        gen_instr("JMPZ", -1);
     }
     else if (test == "!=")
     {
-        gen_instr("NEQ", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("NEQ", -1);
         jumpStack.push(instrTable.currAddress);
-        gen_instr("JMPZ", NULL);
+        gen_instr("JMPZ", -1);
     }
     else if (test == ">")
     {
-        gen_instr("GRT", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("GRT", -1);
         jumpStack.push(instrTable.currAddress);
-        gen_instr("JMPZ", NULL);
+        gen_instr("JMPZ", -1);
     }
     else if (test == "<")
     {
-        gen_instr("LES", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("LES", -1);
         jumpStack.push(instrTable.currAddress);
-        gen_instr("JMPZ", NULL);
+        gen_instr("JMPZ", -1);
     }
     else if (test == "<=")
     {
-        gen_instr("LEQ", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("LEQ", -1);
         jumpStack.push(instrTable.currAddress);
-        gen_instr("JMPZ", NULL);
+        gen_instr("JMPZ", -1);
     }
     else if (test == "=>")
     {
-        gen_instr("GEQ", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("GEQ", -1);
         jumpStack.push(instrTable.currAddress);
-        gen_instr("JMPZ", NULL);
+        gen_instr("JMPZ", -1);
     }
     relop(file);
 
@@ -1341,7 +1409,8 @@ void exprime(std::ifstream &file)
         //std::cout << "<Expression Prime>			->  +<Term> <Expression Prime> | -<Term><Expression Prime>  |  <empty>\n";
         term(file);
 
-        gen_instr("ADD", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("ADD", -1);
 
         if (test == "+" || test == "-")
         {
@@ -1374,7 +1443,8 @@ void termprime(std::ifstream &file)
         //std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
         factor(file);
 
-        gen_instr("MUL", NULL);
+        type_check(instrTable.currAddress);
+        gen_instr("MUL", -1);
 
         if (test == "*" || test == "/")
         {
@@ -1394,14 +1464,14 @@ void factor(std::ifstream &file)
 
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
         lexer(file);
-        gen_instr("PUSHM", get_addr(test));
+        //gen_instr("PUSHM", get_addr(test));
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
         primary(file);
     }
     else
     {
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
-        gen_instr("PUSHM", get_addr(test));
+        //gen_instr("PUSHM", get_addr(test));
         primary(file);
     }
 }
@@ -1414,6 +1484,7 @@ void primary(std::ifstream &file)
         //std::cout << "<Primary>    ->    <Identifier> <Identifier Suffix> |  <Integer>    |   ( <Expression> )   |   true   |  false\n";
         if (token == "Identifier")
         {
+            gen_instr("PUSHM", get_addr(test));
             lexer(file);
 
             if (test == "(")
@@ -1434,8 +1505,13 @@ void primary(std::ifstream &file)
                 std::cout << "Expected )\n";
             lexer(file);
         }
-        else
+        else {
+            if (test == "true") gen_instr("PUSHM", 1);
+            if (test == "false") gen_instr("PUSHM", 0);
+            if (token == "Integer") {gen_instr("PUSHM", stoi(test));}
+
             lexer(file);
+        }
     }
     else
     {
