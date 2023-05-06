@@ -572,9 +572,9 @@ int main(int argc, const char *argv[])
 
     for (int i = 1; i < instrTable.currAddress; i++) {
         std::cout   << std::left << std::setw(15) << instrTable.addr[i]           //index number 
-                    << std::left << std::setw(15) << instrTable.op[i] 
-                    << instrTable.oprd[i]
-                    << std::endl; 
+                    << std::left << std::setw(15) << instrTable.op[i];
+        if (instrTable.oprd[i] != -1) std::cout << instrTable.oprd[i];
+        std::cout << std::endl; 
     }
 
     file.close();
