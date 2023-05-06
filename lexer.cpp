@@ -18,8 +18,8 @@ bool done = false;
 bool unknown = false;
 char c;
 char s;
-std::stack<int> jumpStack;
-std::stack<std::string> typeStack;
+std::vector<int> jumpStack;
+std::vector<std::string> typeStack;
 
 // Terminal Symbols Vectors
 std::vector<char> opsep = {'=', '!', '>', '<', '+', '-', '*', '/', '#', '(', ')', '{', '}', ';', ','};
@@ -29,7 +29,7 @@ std::vector<char> num = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 // Begin Instruction Table
 struct InstructionTable
 {
-    int currAddress = 0;
+    int currAddress = 1;
     int symAddress = 5000;
     //int addr[1000];
     std::vector<int> addr = std::vector<int>(1000);
@@ -53,8 +53,8 @@ void gen_instr(std::string opcode, int oprnd)
 // Begin Back Patch
 void back_patch(int jmpAddr)
 {
-    int addr = jumpStack.top();
-    jumpStack.pop();
+    int addr = jumpStack.front();
+    jumpStack.erase(jumpStack.begin());
     instrTable.oprd[addr] = jmpAddr;
 } // end Back Patch
 
@@ -70,11 +70,11 @@ int get_addr(std::string var)
 
     //  Identifier used without initialization
     if (it == symTable.ids.end()) {
-        std::cout << "                          " << var << " has not been initialized\n\n";
+        std::cout << "                          " << var << " has not been initialized\n";
         return -1;
     }
     // Identifer has already been initalized; return its address
-    ad = (it - symTable.ids.begin()) + 5000;
+    ad = (it - symTable.ids.begin()) + 4999;
 
     return ad;
 } // end Get Address
@@ -90,7 +90,7 @@ void init_sym(std::string var) {
         //symTable.ids.push_back(var);
         //ad = symTable.symAddress;
         symTable.addr[symTable.currAddress] = symTable.symAddress;
-        symTable.type[symTable.currAddress] = typeStack.top();
+        symTable.type[symTable.currAddress] = typeStack.front();
         symTable.currAddress++;
         symTable.symAddress++;
     }
@@ -103,7 +103,7 @@ void init_sym(std::string var) {
 void check_sym(std::string var) {
     auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
     // Identifier has already been added; cannot initialize again
-    if (it != symTable.ids.end()) std::cout << "                            " << var << " has already been initialized\n\n";
+    if (it != symTable.ids.end()) std::cout << "                            " << var << " has already been initialized\n";
 }
 
 void type_check(int ad) {
@@ -121,6 +121,7 @@ void type_check(int ad) {
     b = ti - symTable.addr.begin();
 
     if (symTable.type[a] != symTable.type[b]) std::cout << "                            Incompatible Type Operation\n";
+    typeStack.clear();
 }
 // Begin Lexer
 void lexer(std::ifstream &file)
@@ -571,7 +572,7 @@ int main(int argc, const char *argv[])
                 << std::left << std::setw(15) << "Address"            
                 << "Type\n";
 
-    for (int i = 0; i < symTable.currAddress; i++) {
+    for (int i = 1; i < symTable.currAddress; i++) {
         std::cout   << std::left << std::setw(15) << i 
                     << std::left << std::setw(15) << symTable.ids[i]
                     << std::left << std::setw(15) << symTable.addr[i]           //5000 address 
@@ -585,7 +586,7 @@ int main(int argc, const char *argv[])
                 << std::left << std::setw(15) << "Operation" 
                 << "Operand\n";
 
-    for (int i = 0; i < instrTable.currAddress; i++) {
+    for (int i = 1; i < instrTable.currAddress; i++) {
         std::cout   << std::left << std::setw(15) << instrTable.addr[i]           //index number 
                     << std::left << std::setw(15) << instrTable.op[i] 
                     << instrTable.oprd[i]
@@ -786,7 +787,7 @@ void qualifier(std::ifstream &file)
     if (test == "int" || test == "bool")
     {
         //std::cout << "<Qualifier> -> int   |    bool   \n";
-        typeStack.push(test);
+        typeStack.push_back(test);
     }
     else
     {
@@ -872,7 +873,8 @@ void dec(std::ifstream &file)
     //std::cout << "<Declaration>				-> 	<Qualifier> <IDs>\n";
     check_sym(test);                            //check if symbol already declared earlier
     ids(file);
-    typeStack.pop();
+    //typeStack.erase(typeStack.begin());
+    typeStack.clear();
 }
 
 // Rule 16
@@ -1070,7 +1072,7 @@ void if_(std::ifstream &file)
     //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
     statement(file);
     //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
-    jumpStack.push(instrTable.currAddress);     //push 2nd element in stack in case of else
+    jumpStack.push_back(instrTable.currAddress);     //push 2nd element in stack in case of else
     ifsuf(file);
 }
 
@@ -1083,7 +1085,7 @@ void ifsuf(std::ifstream &file)
         //std::cout << "<If Suffix>				->  fi  |  else <Statement> fi\n";
         back_patch(instrTable.currAddress);     // jump to fi label when if cond is false
         gen_instr("LABEL", -1);               // fi label
-        jumpStack.pop();                        // pop 2nd element when no else is used
+        jumpStack.erase(jumpStack.begin());                        // pop 2nd element when no else is used
         lexer(file);
     }
     else if (test == "else")
@@ -1316,61 +1318,65 @@ void while_(std::ifstream &file)
 void cond(std::ifstream &file)
 {
     //std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
+    std::string save;
     exp(file);
 
     //std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
+    
+    save = test;
+    relop(file);
+
+    //std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
+    exp(file);
+
     /*
         Since you can't switch on strings, we'll use a
         if/elseif chain to determine which instruction to generate.
         NOTE: Assuming that the token at this moment is the relational
         operator.
     */
-    if (test == "==")
+    if (save == "==")
     {
         type_check(instrTable.currAddress);
         gen_instr("EQU", -1);
-        jumpStack.push(instrTable.currAddress);
+        jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
-    else if (test == "!=")
+    else if (save == "!=")
     {
         type_check(instrTable.currAddress);
         gen_instr("NEQ", -1);
-        jumpStack.push(instrTable.currAddress);
+        jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
-    else if (test == ">")
+    else if (save == ">")
     {
         type_check(instrTable.currAddress);
         gen_instr("GRT", -1);
-        jumpStack.push(instrTable.currAddress);
+        jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
-    else if (test == "<")
+    else if (save == "<")
     {
         type_check(instrTable.currAddress);
         gen_instr("LES", -1);
-        jumpStack.push(instrTable.currAddress);
+        jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
-    else if (test == "<=")
+    else if (save == "<=")
     {
         type_check(instrTable.currAddress);
         gen_instr("LEQ", -1);
-        jumpStack.push(instrTable.currAddress);
+        jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
-    else if (test == "=>")
+    else if (save == "=>")
     {
         type_check(instrTable.currAddress);
         gen_instr("GEQ", -1);
-        jumpStack.push(instrTable.currAddress);
+        jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
-    relop(file);
-
-    //std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
-    exp(file);
 }
 
 // Rule 31
@@ -1410,7 +1416,9 @@ void exprime(std::ifstream &file)
         term(file);
 
         type_check(instrTable.currAddress);
-        gen_instr("ADD", -1);
+
+        if (test == "+") gen_instr("ADD", -1);
+        else gen_instr("SUB", -1);
 
         if (test == "+" || test == "-")
         {
@@ -1444,7 +1452,8 @@ void termprime(std::ifstream &file)
         factor(file);
 
         type_check(instrTable.currAddress);
-        gen_instr("MUL", -1);
+        if (test == "*") gen_instr("MUL", -1);
+        else gen_instr("DIV", -1);
 
         if (test == "*" || test == "/")
         {
@@ -1506,9 +1515,9 @@ void primary(std::ifstream &file)
             lexer(file);
         }
         else {
-            if (test == "true") gen_instr("PUSHM", 1);
-            if (test == "false") gen_instr("PUSHM", 0);
-            if (token == "Integer") {gen_instr("PUSHM", stoi(test));}
+            if (test == "true") {gen_instr("PUSHM", 1); typeStack.push_back("bool");}
+            if (test == "false") {gen_instr("PUSHM", 0); typeStack.push_back("bool");}
+            if (token == "Integer") {gen_instr("PUSHM", stoi(test)); typeStack.push_back("int");}
 
             lexer(file);
         }

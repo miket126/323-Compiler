@@ -4,6 +4,6 @@ bool testBool; int testBool; int testInt, a, b, c;
 
 get(testBool);
 return testInt + testBool;
-testInt = testBol;
+testInt = xyz;
 if (a < b)  a =  c;  fi
 put(testInt);

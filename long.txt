@@ -6,7 +6,7 @@ int sum, i, max; bool value; int a, b, c;
 value = true;
 sum = 10;
 i = 5;
-
+value = 7;
 get (max);
 while (i =>  (max + a))  {
         sum = sum / i;
