@@ -62,21 +62,16 @@ void back_patch(int jmpAddr)
 int get_addr(std::string var)
 {
     auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
-    int ad;
 
-    // If var is integer, true, false
-    
-
-
-    //  Identifier used without initialization
+    //  Identifier used without declaration
     if (it == symTable.ids.end()) {
-        std::cout << "                          " << var << " has not been initialized\n";
+        std::cout << "                          " << var << " has not been declared\n";
         return -1;
     }
-    // Identifer has already been initalized; return its address
-    ad = (it - symTable.ids.begin()) + 4999;
+    // Identifer has already been declared; return its address
+    //int ad = (it - symTable.ids.begin()) + 4999;
 
-    return ad;
+    return ((it - symTable.ids.begin()) + 4999);
 } // end Get Address
 
 void init_sym(std::string var) {
@@ -102,32 +97,15 @@ void init_sym(std::string var) {
 
 void check_sym(std::string var) {
     auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
-    // Identifier has already been added; cannot initialize again
-    if (it != symTable.ids.end()) std::cout << "                            " << var << " has already been initialized\n";
+    // Identifier has already been added; cannot declare again
+    if (it != symTable.ids.end()) std::cout << "                          " << var << " has already been declared\n";
 }
 
-void type_check(void) {
-
-    /*
-    int first, second;
-    int a,b;
-
-    //get identifier address
-    first = instrTable.oprd[ad - 2];            
-    second = instrTable.oprd[ad - 1];
-
-    //get identifier index
-    auto it = std::find(symTable.addr.begin(), symTable.addr.end(), first);
-    a = it - symTable.addr.begin();
-    auto ti = std::find(symTable.addr.begin(), symTable.addr.end(), second);
-    b = ti - symTable.addr.begin();
-    */
-
+void type_check() {
     if (typeStack.size() == 2) {
-        if (typeStack[0] != typeStack[1]) std::cout << "                            Incompatible Type Operation\n";
+        if (typeStack[0] != typeStack[1]) std::cout << "                          Incompatible Type Operation\n";
         typeStack.clear();
     }
-    
 }
 // Begin Lexer
 void lexer(std::ifstream &file)
@@ -1043,9 +1021,9 @@ void assign(std::ifstream &file)
 // Rule 23
 void if_(std::ifstream &file)
 {
-    int addr;
+    
     if (test == "if") {
-        addr = instrTable.currAddress;
+        int addr = instrTable.currAddress;
         gen_instr("LABEL", -1);
     }
         //std::cout << "<If>						-> 	if(<Condition>)<Statement> <If Suffix>\n";
@@ -1329,12 +1307,12 @@ void while_(std::ifstream &file)
 void cond(std::ifstream &file)
 {
     //std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
-    std::string save;
+    
     exp(file);
 
     //std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
     
-    save = test;
+    std::string save = test;
     relop(file);
 
     //std::cout << "<Condition>				->	<Expression> <Relop> <Expression>\n";
@@ -1484,10 +1462,13 @@ void factor(std::ifstream &file)
         
 
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
+        std::string save = test;
         lexer(file);
         //gen_instr("PUSHM", get_addr(test));
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
         primary(file);
+        type_check();
+        gen_instr("SUB", -1);
     }
     else
     {
@@ -1507,8 +1488,10 @@ void primary(std::ifstream &file)
         {
             gen_instr("PUSHM", get_addr(test));
             auto it = std::find(symTable.ids.begin(), symTable.ids.end(), test);
-            int a = it - symTable.ids.begin();
-            typeStack.push_back(symTable.type[a]);
+            if (it != symTable.ids.end()) {
+                int a = it - symTable.ids.begin();
+                typeStack.push_back(symTable.type[a]);
+            }
             lexer(file);
 
             if (test == "(")
