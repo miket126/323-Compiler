@@ -106,7 +106,9 @@ void check_sym(std::string var) {
     if (it != symTable.ids.end()) std::cout << "                            " << var << " has already been initialized\n";
 }
 
-void type_check(int ad) {
+void type_check(void) {
+
+    /*
     int first, second;
     int a,b;
 
@@ -119,9 +121,13 @@ void type_check(int ad) {
     a = it - symTable.addr.begin();
     auto ti = std::find(symTable.addr.begin(), symTable.addr.end(), second);
     b = ti - symTable.addr.begin();
+    */
 
-    if (symTable.type[a] != symTable.type[b]) std::cout << "                            Incompatible Type Operation\n";
-    typeStack.clear();
+    if (typeStack.size() == 2) {
+        if (typeStack[0] != typeStack[1]) std::cout << "                            Incompatible Type Operation\n";
+        typeStack.clear();
+    }
+    
 }
 // Begin Lexer
 void lexer(std::ifstream &file)
@@ -995,7 +1001,11 @@ void comp(std::ifstream &file)
 // Rule 22
 void assign(std::ifstream &file)
 {
-    if (token == "Identifier"){}
+    if (token == "Identifier"){
+        auto it = std::find(symTable.ids.begin(), symTable.ids.end(), test);
+        int a = it - symTable.ids.begin();
+        typeStack.push_back(symTable.type[a]);
+    }
         //std::cout << "<Assign>					->	<Identifier> = <Expression>;\n";
     else
         std::cout << "Expected Identifier\n";
@@ -1016,6 +1026,7 @@ void assign(std::ifstream &file)
     //std::cout << "<Assign>					->	<Identifier> = <Expression>;\n";
     exp(file);
     gen_instr("POPM", get_addr(save));
+    type_check();
 
     if (test == ";")
     {
@@ -1337,42 +1348,42 @@ void cond(std::ifstream &file)
     */
     if (save == "==")
     {
-        type_check(instrTable.currAddress);
+        type_check();
         gen_instr("EQU", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "!=")
     {
-        type_check(instrTable.currAddress);
+        type_check();
         gen_instr("NEQ", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == ">")
     {
-        type_check(instrTable.currAddress);
+        type_check();
         gen_instr("GRT", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "<")
     {
-        type_check(instrTable.currAddress);
+        type_check();
         gen_instr("LES", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "<=")
     {
-        type_check(instrTable.currAddress);
+        type_check();
         gen_instr("LEQ", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "=>")
     {
-        type_check(instrTable.currAddress);
+        type_check();
         gen_instr("GEQ", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
@@ -1411,14 +1422,14 @@ void exprime(std::ifstream &file)
     if (test == "+" || test == "-")
     {
         //std::cout << "<Expression Prime>			->  +<Term> <Expression Prime> | -<Term><Expression Prime>  |  <empty>\n";
+        std::string save = test;
         lexer(file);
         //std::cout << "<Expression Prime>			->  +<Term> <Expression Prime> | -<Term><Expression Prime>  |  <empty>\n";
         term(file);
 
-        type_check(instrTable.currAddress);
-
-        if (test == "+") gen_instr("ADD", -1);
-        else gen_instr("SUB", -1);
+        type_check();
+        if (save == "+") gen_instr("ADD", -1);
+        else if (save == "-") gen_instr("SUB", -1);
 
         if (test == "+" || test == "-")
         {
@@ -1447,13 +1458,14 @@ void termprime(std::ifstream &file)
     if (test == "*" || test == "/")
     {
         //std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
+        std::string save = test;
         lexer(file);
         //std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
         factor(file);
 
-        type_check(instrTable.currAddress);
-        if (test == "*") gen_instr("MUL", -1);
-        else gen_instr("DIV", -1);
+        type_check();
+        if (save == "*") gen_instr("MUL", -1);
+        else if (save == "/") gen_instr("DIV", -1);
 
         if (test == "*" || test == "/")
         {
@@ -1494,6 +1506,9 @@ void primary(std::ifstream &file)
         if (token == "Identifier")
         {
             gen_instr("PUSHM", get_addr(test));
+            auto it = std::find(symTable.ids.begin(), symTable.ids.end(), test);
+            int a = it - symTable.ids.begin();
+            typeStack.push_back(symTable.type[a]);
             lexer(file);
 
             if (test == "(")
