@@ -31,7 +31,6 @@ struct InstructionTable
 {
     int currAddress = 1;
     int symAddress = 5000;
-    //int addr[1000];
     std::vector<int> addr = std::vector<int>(1000);
     std::vector<std::string> op = std::vector<std::string>(1000);
     int oprd[1000];
@@ -68,30 +67,21 @@ int get_addr(std::string var)
         std::cout << "                          " << var << " has not been declared\n";
         return -1;
     }
-    // Identifer has already been declared; return its address
-    //int ad = (it - symTable.ids.begin()) + 4999;
 
     return ((it - symTable.ids.begin()) + 4999);
 } // end Get Address
 
 void init_sym(std::string var) {
     auto it = std::find(symTable.ids.begin(), symTable.ids.end(), var);
-    //int ad;
 
     // Identifier has not been declared; add it to the symbol table
     if (it == symTable.ids.end()) 
     {   
         symTable.ids[symTable.currAddress] = var;
-        //symTable.ids.push_back(var);
-        //ad = symTable.symAddress;
         symTable.addr[symTable.currAddress] = symTable.symAddress;
         symTable.type[symTable.currAddress] = typeStack.front();
         symTable.currAddress++;
         symTable.symAddress++;
-    }
-    
-    else {
-        //std::cerr << "Item has been initialized\n";
     }
 }
 
@@ -101,12 +91,16 @@ void check_sym(std::string var) {
     if (it != symTable.ids.end()) std::cout << "                          " << var << " has already been declared\n";
 }
 
-void type_check() {
-    if (typeStack.size() == 2) {
+void type_check(std::string save) {
+    if (typeStack.size() > 1) {
         if (typeStack[0] != typeStack[1]) std::cout << "                          Incompatible Type Operation\n";
-        typeStack.clear();
+        else if ((typeStack[0] == "bool") && (typeStack[1] == "bool")) {
+            if ((save != "=") && (save != "==") && (save != "!=")) std::cout << "                          Arithmetic Operation on Booleans not allowed\n";
+        }
+    typeStack.clear();
     }
 }
+
 // Begin Lexer
 void lexer(std::ifstream &file)
 {
@@ -989,10 +983,12 @@ void assign(std::ifstream &file)
         std::cout << "Expected Identifier\n";
 
     std::string save = test;
+    std::string s;
     lexer(file);
     if (test == "=")
     {
         //std::cout << "<Assign>					->	<Identifier> = <Expression>;\n";
+        s = test;
         lexer(file);
     }
     else
@@ -1004,7 +1000,7 @@ void assign(std::ifstream &file)
     //std::cout << "<Assign>					->	<Identifier> = <Expression>;\n";
     exp(file);
     gen_instr("POPM", get_addr(save));
-    type_check();
+    type_check(s);
 
     if (test == ";")
     {
@@ -1326,42 +1322,42 @@ void cond(std::ifstream &file)
     */
     if (save == "==")
     {
-        type_check();
+        type_check(save);
         gen_instr("EQU", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "!=")
     {
-        type_check();
+        type_check(save);
         gen_instr("NEQ", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == ">")
     {
-        type_check();
+        type_check(save);
         gen_instr("GRT", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "<")
     {
-        type_check();
+        type_check(save);
         gen_instr("LES", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "<=")
     {
-        type_check();
+        type_check(save);
         gen_instr("LEQ", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
     }
     else if (save == "=>")
     {
-        type_check();
+        type_check(save);
         gen_instr("GEQ", -1);
         jumpStack.push_back(instrTable.currAddress);
         gen_instr("JMPZ", -1);
@@ -1405,7 +1401,7 @@ void exprime(std::ifstream &file)
         //std::cout << "<Expression Prime>			->  +<Term> <Expression Prime> | -<Term><Expression Prime>  |  <empty>\n";
         term(file);
 
-        type_check();
+        type_check(save);
         if (save == "+") gen_instr("ADD", -1);
         else if (save == "-") gen_instr("SUB", -1);
 
@@ -1441,7 +1437,7 @@ void termprime(std::ifstream &file)
         //std::cout << "<Term Prime>				->  *<Factor><Term Prime>  |  /<Factor><Term Prime>  |  <empty>\n";
         factor(file);
 
-        type_check();
+        type_check(save);
         if (save == "*") gen_instr("MUL", -1);
         else if (save == "/") gen_instr("DIV", -1);
 
@@ -1467,7 +1463,7 @@ void factor(std::ifstream &file)
         //gen_instr("PUSHM", get_addr(test));
         //std::cout << "<Factor>					->	-<Primary>	 |	<Primary>\n";
         primary(file);
-        type_check();
+        type_check(save);
         gen_instr("SUB", -1);
     }
     else
