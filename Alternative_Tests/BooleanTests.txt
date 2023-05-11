@@ -1,0 +1,19 @@
+#
+bool testBool, testBool2, testBool3; int testBool; int testInt, a, b, c;
+#
+a = 5;
+b = 6;
+c = 7;
+get(testBool);[*testBool would be assigned here*]
+if (a < b)  a =  c;  fi
+{
+    testBool2 = false;
+}
+if(testBool != testBool2){
+    testBool3 = testBool;
+    get(a);
+}fi
+if(testBool == true) get(b); fi
+put(a);
+put(testInt);
+return testInt + testBool;

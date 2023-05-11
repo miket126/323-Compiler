@@ -1509,8 +1509,8 @@ void primary(std::ifstream &file)
             lexer(file);
         }
         else {
-            if (test == "true") {gen_instr("PUSHM", 1); typeStack.push_back("bool");}
-            if (test == "false") {gen_instr("PUSHM", 0); typeStack.push_back("bool");}
+            if (test == "true") {gen_instr("PUSHI", 1); typeStack.push_back("bool");}
+            if (test == "false") {gen_instr("PUSHI", 0); typeStack.push_back("bool");}
             if (token == "Integer") {gen_instr("PUSHI", stoi(test)); typeStack.push_back("int");}
 
             lexer(file);
