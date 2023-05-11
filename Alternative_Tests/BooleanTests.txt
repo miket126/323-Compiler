@@ -14,6 +14,9 @@ if(testBool != testBool2){
     get(a);
 }fi
 if(testBool == true) get(b); fi
+if(testBool3 <= testBool) get(b); fi
+if(testBool > false) get(b); fi
+if(testBool == 1) get(b); fi
 put(a);
 put(testInt);
 return testInt + testBool;
