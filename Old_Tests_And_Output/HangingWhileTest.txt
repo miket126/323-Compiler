@@ -1,1 +1,0 @@
-##while(true==true)put(3 * 5 / 5);endwhile
